@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+:root {
+  --bg:#f5f5f5; --panel:#fff; --panel2:#efefef; --border:#e0e0e0;
+  --text:#1a1a1a; --muted:#888; --blue:#3e88e8; --blue-d:#1a5fc8;
+  --red:#e03c3c; --green:#28a745;
+}
+html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); font-family:'Roboto',sans-serif; color:var(--text); }
+.root { width:100%; height:100%; display:grid; grid-template-columns:340px 1fr; }
+
+/* LEFT */
+.left { background:var(--panel); display:flex; flex-direction:column; border-right:1px solid var(--border); overflow:hidden; }
+
+/* top bar */
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.tl,.tr { display:flex; align-items:center; gap:8px; }
+#clock { font-size:15px; font-weight:500; }
+.temp { font-size:13px; color:var(--muted); }
+
+.fs-btn { background:var(--panel2); border:1px solid var(--border); border-radius:6px; cursor:pointer; padding:5px; display:flex; align-items:center; color:var(--muted); transition:all .15s; }
+.fs-btn:hover,.fs-btn:active { background:var(--blue); color:#fff; border-color:var(--blue); }
+
+.batt { display:flex; align-items:center; gap:4px; }
+.batt-b { width:26px; height:13px; border:2px solid #bbb; border-radius:3px; padding:1.5px; position:relative; }
+.batt-b::after { content:''; position:absolute; right:-4px; top:50%; transform:translateY(-50%); width:3px; height:6px; background:#bbb; border-radius:0 2px 2px 0; }
+.batt-f { height:100%; background:var(--green); border-radius:1px; width:70%; }
+.batt-t { font-size:11px; color:var(--muted); font-weight:500; }
+
+/* gear */
+.gear { display:flex; align-items:center; justify-content:space-between; padding:7px 18px 3px; flex-shrink:0; }
+.gears { display:flex; gap:14px; }
+.gears span { font-size:15px; font-weight:500; color:#ccc; }
+.gears span.on { color:var(--text); font-weight:700; font-size:18px; }
+.rng { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:3px; }
+.rng strong { color:var(--text); }
+
+/* speed */
+.speed-sec { display:flex; flex-direction:column; align-items:center; padding:2px 0 0; flex-shrink:0; }
+#spd { font-size:88px; font-weight:300; line-height:1; letter-spacing:-4px; transition:color .3s; font-variant-numeric:tabular-nums; }
+#spd.over { color:var(--red); }
+.mph { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:3px; }
+
+/* limit row */
+.lim-row { display:flex; align-items:center; justify-content:space-between; padding:3px 22px; flex-shrink:0; }
+.sl { width:48px; height:48px; border-radius:50%; border:3.5px solid var(--red); background:#fff; box-shadow:0 1px 6px rgba(0,0,0,.12); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.sl .sl-l { font-size:6px; font-weight:700; letter-spacing:.3px; text-align:center; line-height:1.3; }
+.sl .sl-n { font-size:18px; font-weight:700; line-height:1; }
+.setwrap { display:flex; flex-direction:column; align-items:center; }
+.setlbl { font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+.setctrl { display:flex; align-items:center; gap:7px; }
+.setctrl button { width:23px; height:23px; border-radius:50%; border:1.5px solid var(--border); background:var(--panel2); font-size:16px; cursor:pointer; color:var(--text); display:flex; align-items:center; justify-content:center; transition:all .1s; }
+.setctrl button:active { background:var(--blue); color:#fff; border-color:var(--blue); }
+#setval { font-size:18px; font-weight:700; min-width:26px; text-align:center; }
+
+/* odo */
+.odo { text-align:center; padding:1px 0 3px; flex-shrink:0; }
+.odo-l { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+#odov { font-family:'Roboto Mono',monospace; font-size:14px; font-weight:500; }
+
+/* music */
+.music { margin:4px 10px 0; background:var(--panel2); border-radius:13px; padding:8px 12px 6px; flex:1; min-height:0; display:flex; flex-direction:column; gap:5px; overflow:hidden; }
+.mhdr { display:flex; align-items:center; justify-content:space-between; }
+.msrc { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+.gd { width:6px; height:6px; border-radius:50%; background:#1db954; }
+#mstatus { font-size:10px; color:var(--muted); }
+
+.arow { display:flex; align-items:center; gap:10px; }
+.art { width:58px; height:58px; border-radius:10px; flex-shrink:0; background:linear-gradient(135deg,#667eea,#764ba2); box-shadow:0 4px 12px rgba(0,0,0,.15); display:flex; align-items:center; justify-content:center; font-size:24px; transition:background .4s; }
+.art.glow { animation:aglow 2s ease-in-out infinite; }
+@keyframes aglow { 0%,100%{box-shadow:0 4px 12px rgba(0,0,0,.15);} 50%{box-shadow:0 6px 20px rgba(62,136,232,.35);} }
+.smeta { flex:1; min-width:0; }
+.stitle { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sartist { font-size:11px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.prow { display:flex; align-items:center; gap:7px; }
+.pbar { flex:1; height:4px; background:#ddd; border-radius:2px; cursor:pointer; }
+.pfill { height:100%; background:var(--blue); border-radius:2px; width:0%; pointer-events:none; }
+.tlbl { font-size:10px; color:var(--muted); font-family:'Roboto Mono',monospace; }
+
+.mctrl { display:flex; align-items:center; justify-content:center; gap:16px; }
+.mcb { background:none; border:none; cursor:pointer; color:var(--muted); display:flex; align-items:center; padding:4px; transition:color .15s, transform .1s; }
+.mcb:hover { color:var(--text); }
+.mcb:active { transform:scale(.88); }
+.pbtn { width:40px; height:40px; border-radius:50%; background:var(--blue); color:#fff !important; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(62,136,232,.4); }
+.pbtn:active { background:var(--blue-d) !important; transform:scale(.93) !important; }
+
+.vrow { display:flex; align-items:center; gap:7px; }
+.vico { color:var(--muted); flex-shrink:0; }
+.vtrack { flex:1; height:4px; background:#ddd; border-radius:2px; cursor:pointer; }
+.vfill { height:100%; background:var(--muted); border-radius:2px; width:70%; pointer-events:none; }
+
+/* bottom bar */
+.bbar { border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-around; padding:7px 4px; flex-shrink:0; }
+.bb { display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; cursor:pointer; color:var(--muted); font-size:9px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; padding:3px 8px; border-radius:7px; transition:all .2s; }
+.bb svg { width:17px; height:17px; }
+.bb:hover,.bb.on { color:var(--blue); background:rgba(62,136,232,.08); }
+
+/* RIGHT */
+.right { position:relative; overflow:hidden; background:#e8ede0; }
+#map { width:100%; height:100%; border:none; display:block; padding-top:46px; }
+
+.mtopbar { position:absolute; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:rgba(255,255,255,.93); backdrop-filter:blur(8px); border-bottom:1px solid rgba(0,0,0,.08); z-index:20; }
+.msearch-wrap { display:flex; align-items:center; gap:6px; background:var(--panel2); border-radius:18px; padding:5px 12px; flex:1; max-width:320px; }
+.msearch-wrap svg { flex-shrink:0; color:var(--muted); }
+#search-input { background:none; border:none; outline:none; font-size:13px; color:var(--text); width:100%; font-family:'Roboto',sans-serif; }
+#search-input::placeholder { color:var(--muted); }
+.search-go { background:var(--blue); border:none; border-radius:12px; color:#fff; font-size:11px; font-weight:600; padding:3px 10px; cursor:pointer; white-space:nowrap; }
+.search-go:active { background:var(--blue-d); }
+.mbtn { width:32px; height:32px; border-radius:50%; background:#fff; border:none; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.12); display:flex; align-items:center; justify-content:center; color:var(--blue); transition:background .2s; }
+.mbtn:hover { background:var(--blue); color:#fff; }
+.mbtn:active { transform:scale(.93); }
+
+.gpspill { position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,.62); color:#fff; border-radius:20px; padding:5px 11px; font-size:11px; display:flex; align-items:center; gap:5px; z-index:20; backdrop-filter:blur(4px); }
+.gdot { width:7px; height:7px; border-radius:50%; background:#ff5555; flex-shrink:0; }
+.gdot.ok { background:#39e07a; animation:blink 1.4s infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.2;} }
+</style>
+</head>
+<body>
+<div class="root">
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="topbar">
+      <div class="tl">
+        <span id="clock">--:-- --</span>
+        <span class="temp">72°F</span>
+      </div>
+      <div class="tr">
+        <button class="fs-btn" onclick="toggleFS()" title="Fullscreen">
+          <svg id="fsico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        </button>
+        <div class="batt">
+          <div class="batt-b"><div class="batt-f"></div></div>
+          <span class="batt-t">247 mi</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="gear">
+      <div class="gears"><span>P</span><span>R</span><span>N</span><span class="on">D</span></div>
+      <div class="rng">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <strong>247 mi</strong>
+      </div>
+    </div>
+
+    <div class="speed-sec">
+      <div id="spd">0</div>
+      <div class="mph">MPH</div>
+    </div>
+
+    <div class="lim-row">
+      <div style="width:48px;height:48px;border-radius:50%;border:2.5px solid var(--blue);display:flex;align-items:center;justify-content:center;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="var(--blue)" stroke="none"/></svg>
+      </div>
+      <div class="setwrap">
+        <span class="setlbl">Set Speed</span>
+        <div class="setctrl">
+          <button onclick="chg(-1)">−</button>
+          <span id="setval">65</span>
+          <button onclick="chg(1)">+</button>
+        </div>
+      </div>
+      <div class="sl">
+        <span class="sl-l">SPEED<br>LIMIT</span>
+        <span class="sl-n" id="slimit">65</span>
+      </div>
+    </div>
+
+    <div class="odo">
+      <div class="odo-l">Odometer</div>
+      <div id="odov">024,187.3 mi</div>
+    </div>
+
+    <!-- MUSIC — Spotify -->
+    <div class="music">
+      <!-- NOT LOGGED IN -->
+      <div id="sp-login">
+        <div class="mhdr">
+          <div class="msrc"><div class="gd" style="background:#1db954"></div> Spotify</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;padding:10px 0;">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="#1db954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          <button onclick="spotifyLogin()" style="background:#1db954;color:#fff;border:none;border-radius:20px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Roboto',sans-serif;letter-spacing:.5px;">
+            Connect Spotify
+          </button>
+          <span style="font-size:10px;color:var(--muted);text-align:center;">Premium required · Your music, your control</span>
+        </div>
+      </div>
+
+      <!-- LOGGED IN PLAYER -->
+      <div id="sp-player" style="display:none;flex-direction:column;gap:5px;height:100%;">
+        <div class="mhdr">
+          <div class="msrc"><div class="gd" style="background:#1db954"></div> Spotify</div>
+          <span id="mstatus" style="font-size:10px;color:var(--muted);">Connected</span>
+        </div>
+        <div class="arow">
+          <img id="artbox" src="" alt="art" style="width:58px;height:58px;border-radius:10px;object-fit:cover;flex-shrink:0;background:#ddd;box-shadow:0 4px 12px rgba(0,0,0,.15);">
+          <div class="smeta">
+            <div class="stitle" id="stitle">—</div>
+            <div class="sartist" id="sartist">—</div>
+          </div>
+        </div>
+        <div class="prow">
+          <span class="tlbl" id="tcur">0:00</span>
+          <div class="pbar" id="pbar" onclick="seekSp(event)"><div class="pfill" id="pfill"></div></div>
+          <span class="tlbl" id="tdur">0:00</span>
+        </div>
+        <div class="mctrl">
+          <button class="mcb" onclick="spPrev()">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+          </button>
+          <button class="mcb pbtn" onclick="spToggle()">
+            <svg id="pico" width="21" height="21" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button class="mcb" onclick="spNext()">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.14L8 14.14V9.86zM16 6h2v12h-2z"/></svg>
+          </button>
+        </div>
+        <div class="vrow">
+          <svg class="vico" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>
+          <div class="vtrack" id="vtrack" onclick="setSpVol(event)"><div class="vfill" id="vfill" style="width:70%"></div></div>
+          <svg class="vico" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="bbar">
+      <button class="bb on">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+        Car
+      </button>
+      <button class="bb" onclick="locateMap()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Map
+      </button>
+      <button class="bb">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        Music
+      </button>
+      <button class="bb">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        Alerts
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="mtopbar">
+      <div class="msearch-wrap">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="search-input" type="text" placeholder="Search destination..." onkeydown="if(event.key==='Enter')searchMap()"/>
+        <button class="search-go" onclick="searchMap()">Go</button>
+      </div>
+      <button class="mbtn" onclick="locateMap()" title="My Location">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      </button>
+    </div>
+
+    <!-- OpenStreetMap embed — free, no API key needed -->
+    <iframe id="map"
+      src="https://www.openstreetmap.org/export/embed.html?bbox=-0.27,51.74,-0.19,51.78&layer=mapnik&marker=51.7612,-0.2353"
+      style="width:100%;height:100%;border:none;display:block;padding-top:46px;"
+      allowfullscreen loading="lazy">
+    </iframe>
+
+    <div class="gpspill">
+      <div class="gdot" id="gdot"></div>
+      <span id="gtxt">GPS: waiting...</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── CLOCK ── */
+function tick(){
+  const n=new Date(); let h=n.getHours(),m=n.getMinutes();
+  const ap=h>=12?'PM':'AM'; h=h%12||12;
+  document.getElementById('clock').textContent=`${h}:${String(m).padStart(2,'0')} ${ap}`;
+}
+tick(); setInterval(tick,1000);
+
+/* ── FULLSCREEN ── */
+function toggleFS(){
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen().catch(()=>{});
+    document.getElementById('fsico').innerHTML='<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>';
+  } else {
+    document.exitFullscreen();
+    document.getElementById('fsico').innerHTML='<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>';
+  }
+}
+document.addEventListener('fullscreenchange',()=>{
+  if(!document.fullscreenElement)
+    document.getElementById('fsico').innerHTML='<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>';
+});
+
+/* ── GPS SPEED ── */
+let odo=24187.3, lastC=null;
+function haversine(a,b,c,d){
+  const R=6371000,r=Math.PI/180,dL=(c-a)*r,dN=(d-b)*r;
+  const x=Math.sin(dL/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dN/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+function fmtOdo(v){
+  const[i,d]=v.toFixed(1).split('.');
+  return i.replace(/\B(?=(\d{3})+(?!\d))/g,',')+'.'+d+' mi';
+}
+if(navigator.geolocation){
+  navigator.geolocation.watchPosition(pos=>{
+    const mph=pos.coords.speed>0?pos.coords.speed*2.23694:0;
+    const r=Math.round(mph);
+    document.getElementById('spd').textContent=r;
+    document.getElementById('spd').classList.toggle('over',r>+document.getElementById('slimit').textContent&&r>0);
+    document.getElementById('gdot').classList.add('ok');
+    document.getElementById('gtxt').textContent=`GPS ✓  acc:${Math.round(pos.coords.accuracy)}m`;
+    if(lastC){
+      odo+=haversine(lastC.lat,lastC.lon,pos.coords.latitude,pos.coords.longitude)*0.000621371;
+      document.getElementById('odov').textContent=fmtOdo(odo);
+    }
+    lastC={lat:pos.coords.latitude,lon:pos.coords.longitude};
+  },err=>{
+    document.getElementById('gdot').classList.remove('ok');
+    document.getElementById('gtxt').textContent='GPS: '+(err.code===1?'permission denied':'error');
+  },{enableHighAccuracy:true,maximumAge:500,timeout:10000});
+} else {
+  document.getElementById('gtxt').textContent='GPS not supported';
+}
+
+/* ── SET SPEED ── */
+let sv=65;
+function chg(d){sv=Math.min(120,Math.max(0,sv+d));document.getElementById('setval').textContent=sv;}
+
+/* ── SEARCH MAP ── */
+async function searchMap(){
+  const q=document.getElementById('search-input').value.trim();
+  if(!q)return;
+  document.getElementById('gtxt').textContent='Searching...';
+  try{
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,{headers:{'Accept-Language':'en'}});
+    const data=await res.json();
+    if(data.length===0){document.getElementById('gtxt').textContent='Not found';return;}
+    const{lat,lon,display_name}=data[0];
+    const la=parseFloat(lat),lo=parseFloat(lon),m=0.018;
+    document.getElementById('map').src=
+      `https://www.openstreetmap.org/export/embed.html?bbox=${lo-m},${la-m},${lo+m},${la+m}&layer=mapnik&marker=${la},${lo}`;
+    document.getElementById('gtxt').textContent=display_name.split(',').slice(0,2).join(',');
+    document.getElementById('search-input').blur();
+  }catch(e){document.getElementById('gtxt').textContent='Search failed';}
+}
+function locateMap(){
+  navigator.geolocation?.getCurrentPosition(pos=>{
+    const{latitude:la,longitude:lo}=pos.coords,m=0.018;
+    document.getElementById('map').src=
+      `https://www.openstreetmap.org/export/embed.html?bbox=${lo-m},${la-m},${lo+m},${la+m}&layer=mapnik&marker=${la},${lo}`;
+    document.getElementById('gtxt').textContent=`Map: ${la.toFixed(4)}, ${lo.toFixed(4)}`;
+  },()=>{document.getElementById('gtxt').textContent='Need location permission';});
+}
+
+/* ══ SPOTIFY ══ */
+const CLIENT_ID = '9ccf3c3270234334b3c74317f5ebd466';
+const REDIRECT   = 'https://venureddyy.github.io/car/';
+const SCOPES     = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
+
+let spToken = null, spPlayer = null, spDeviceId = null;
+let spState = null, progTimer = null;
+
+/* ── Auth ── */
+function spotifyLogin(){
+  const verifier = generateVerifier(128);
+  sessionStorage.setItem('sp_verifier', verifier);
+  generateChallenge(verifier).then(challenge=>{
+    const url = new URL('https://accounts.spotify.com/authorize');
+    url.searchParams.set('client_id', CLIENT_ID);
+    url.searchParams.set('response_type', 'code');
+    url.searchParams.set('redirect_uri', REDIRECT);
+    url.searchParams.set('scope', SCOPES);
+    url.searchParams.set('code_challenge_method', 'S256');
+    url.searchParams.set('code_challenge', challenge);
+    window.location = url.toString();
+  });
+}
+
+function generateVerifier(len){
+  const arr = new Uint8Array(len);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'').slice(0,len);
+}
+async function generateChallenge(verifier){
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function exchangeCode(code){
+  const verifier = sessionStorage.getItem('sp_verifier');
+  const res = await fetch('https://accounts.spotify.com/api/token',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: new URLSearchParams({
+      grant_type:'authorization_code',
+      code, redirect_uri: REDIRECT,
+      client_id: CLIENT_ID,
+      code_verifier: verifier
+    })
+  });
+  const data = await res.json();
+  if(data.access_token){
+    spToken = data.access_token;
+    sessionStorage.setItem('sp_token', spToken);
+    if(data.refresh_token) sessionStorage.setItem('sp_refresh', data.refresh_token);
+    // clean URL
+    window.history.replaceState({}, '', REDIRECT);
+    initSDK();
+  }
+}
+
+async function refreshToken(){
+  const rt = sessionStorage.getItem('sp_refresh');
+  if(!rt) return;
+  const res = await fetch('https://accounts.spotify.com/api/token',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: new URLSearchParams({
+      grant_type:'refresh_token',
+      refresh_token: rt,
+      client_id: CLIENT_ID
+    })
+  });
+  const data = await res.json();
+  if(data.access_token){
+    spToken = data.access_token;
+    sessionStorage.setItem('sp_token', spToken);
+  }
+}
+
+/* ── SDK init ── */
+function initSDK(){
+  document.getElementById('sp-login').style.display = 'none';
+  document.getElementById('sp-player').style.display = 'flex';
+  document.getElementById('mstatus').textContent = 'Loading SDK...';
+
+  const script = document.createElement('script');
+  script.src = 'https://sdk.scdn.co/spotify-player.js';
+  document.body.appendChild(script);
+
+  window.onSpotifyWebPlaybackSDKReady = () => {
+    spPlayer = new Spotify.Player({
+      name: 'Car Dashboard',
+      getOAuthToken: cb => cb(spToken),
+      volume: 0.7
+    });
+    spPlayer.addListener('ready', ({device_id}) => {
+      spDeviceId = device_id;
+      document.getElementById('mstatus').textContent = '● Ready';
+      transferPlayback(device_id);
+    });
+    spPlayer.addListener('not_ready', () => {
+      document.getElementById('mstatus').textContent = 'Offline';
+    });
+    spPlayer.addListener('player_state_changed', state => {
+      if(!state) return;
+      spState = state;
+      updateUI(state);
+    });
+    spPlayer.addListener('authentication_error', async () => {
+      await refreshToken();
+      spPlayer.connect();
+    });
+    spPlayer.connect();
+  };
+}
+
+async function transferPlayback(deviceId){
+  await spFetch('PUT','https://api.spotify.com/v1/me/player',{device_ids:[deviceId],play:false});
+}
+
+/* ── UI update ── */
+function fmt(ms){
+  const s=Math.floor(ms/1000);
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+function updateUI(state){
+  const track = state.track_window.current_track;
+  document.getElementById('stitle').textContent = track.name;
+  document.getElementById('sartist').textContent = track.artists.map(a=>a.name).join(', ');
+  const art = track.album.images[0]?.url;
+  if(art) document.getElementById('artbox').src = art;
+  document.getElementById('tdur').textContent = fmt(track.duration_ms);
+  document.getElementById('tcur').textContent = fmt(state.position);
+  const pct = (state.position / track.duration_ms) * 100;
+  document.getElementById('pfill').style.width = pct + '%';
+  document.getElementById('pico').innerHTML = state.paused
+    ? '<path d="M8 5v14l11-7z"/>'
+    : '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+  document.getElementById('mstatus').textContent = state.paused ? 'Paused' : '▶ Playing';
+
+  // live progress tick
+  clearInterval(progTimer);
+  if(!state.paused){
+    let pos = state.position;
+    const dur = track.duration_ms;
+    progTimer = setInterval(()=>{
+      pos += 1000;
+      if(pos >= dur){ clearInterval(progTimer); return; }
+      document.getElementById('tcur').textContent = fmt(pos);
+      document.getElementById('pfill').style.width = (pos/dur*100) + '%';
+    }, 1000);
+  }
+}
+
+/* ── Controls ── */
+async function spToggle(){ if(spPlayer) await spPlayer.togglePlay(); }
+async function spNext(){   if(spPlayer) await spPlayer.nextTrack(); }
+async function spPrev(){   if(spPlayer) await spPlayer.previousTrack(); }
+
+async function seekSp(e){
+  if(!spState) return;
+  const dur = spState.track_window.current_track.duration_ms;
+  const pct = e.offsetX / document.getElementById('pbar').offsetWidth;
+  await spFetch('PUT',`https://api.spotify.com/v1/me/player/seek?position_ms=${Math.round(pct*dur)}`);
+}
+
+async function setSpVol(e){
+  const pct = Math.max(0,Math.min(1, e.offsetX / document.getElementById('vtrack').offsetWidth));
+  document.getElementById('vfill').style.width = (pct*100)+'%';
+  if(spPlayer) await spPlayer.setVolume(pct);
+}
+
+/* ── API helper ── */
+async function spFetch(method, url, body){
+  const opts = { method, headers:{ Authorization:`Bearer ${spToken}`, 'Content-Type':'application/json' } };
+  if(body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if(res.status === 401){ await refreshToken(); }
+  return res;
+}
+
+/* ── Boot: check for callback code or saved token ── */
+(function boot(){
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('code');
+  const saved  = sessionStorage.getItem('sp_token');
+
+  if(code){
+    exchangeCode(code);
+  } else if(saved){
+    spToken = saved;
+    initSDK();
+  }
+  // else: show login button (default state)
+})();
+</script>
+</body>
+</html>

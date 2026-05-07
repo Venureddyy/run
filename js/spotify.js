@@ -257,12 +257,41 @@ export function initSpotify() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const token = localStorage.getItem('sp_token');
+  const refresh = localStorage.getItem('sp_refresh');
+
   if (code) {
     exchangeCode(code);
-  } else if (token) {
+  } else if (token && refresh) {
+    // Validate token before using
     spToken = token;
-    initSDK();
+    validateToken().then(valid => {
+      if (valid) {
+        initSDK();
+      } else {
+        // Try refresh
+        refreshToken().then(() => {
+          if (spToken) initSDK();
+          else clearSpotifyTokens();
+        });
+      }
+    });
   }
+  // else: show login button
+}
+
+async function validateToken() {
+  try {
+    const res = await fetch('https://api.spotify.com/v1/me', {
+      headers: { Authorization: `Bearer ${spToken}` }
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
+function clearSpotifyTokens() {
+  localStorage.removeItem('sp_token');
+  localStorage.removeItem('sp_refresh');
+  localStorage.removeItem('sp_verifier');
 }
 
 // Expose globally

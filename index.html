@@ -55,7 +55,7 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); fo
 
 /* speed */
 .speed-sec { display:flex; flex-direction:column; align-items:center; padding:2px 0 0; flex-shrink:0; }
-#spd { font-size:112px; font-weight:300; line-height:1; letter-spacing:-5px; transition:color .3s; font-variant-numeric:tabular-nums; }
+#spd { font-size:96px; font-weight:300; line-height:1; letter-spacing:-4px; transition:color .3s; font-variant-numeric:tabular-nums; }
 #spd.over { color:var(--red); }
 .mph { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:3px; }
 
@@ -189,8 +189,15 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); fo
 
     <div class="gear">
       <div class="gears"><span>P</span><span>R</span><span>N</span><span class="on">D</span></div>
-      <div class="odo-l" style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">ODOMETER</div>
-      <div id="odov" style="font-family:'Roboto Mono',monospace;font-size:13px;font-weight:500;">024,187.3 mi</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+        <div class="odo-l" style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">ODOMETER</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <div id="odov" style="font-family:'Roboto Mono',monospace;font-size:13px;font-weight:500;cursor:pointer;" onclick="editOdo()" title="Tap to edit">024,187.3 mi</div>
+          <button onclick="editOdo()" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0;display:flex;align-items:center;" title="Edit odometer">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="speed-sec">
@@ -273,19 +280,19 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); fo
     </div>
 
     <div class="bbar">
-      <button class="bb on">
+      <button class="bb on" id="bb-car" onclick="showPanel('car')">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
         Car
       </button>
-      <button class="bb" onclick="locateMap()">
+      <button class="bb" id="bb-map" onclick="showPanel('map')">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
         Map
       </button>
-      <button class="bb">
+      <button class="bb" id="bb-music" onclick="showPanel('music')">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
         Music
       </button>
-      <button class="bb">
+      <button class="bb" id="bb-alerts" onclick="showPanel('alerts')">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
         Alerts
       </button>
@@ -294,32 +301,141 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); fo
 
   <!-- RIGHT -->
   <div class="right">
-    <div class="mtopbar">
-      <div class="msearch-wrap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="search-input" type="text" placeholder="Search destination..." onkeydown="if(event.key==='Enter')searchMap()"/>
-        <button class="search-go" onclick="searchMap()">Go</button>
+
+    <!-- MAP PANEL (default) -->
+    <div id="panel-map" style="position:absolute;inset:0;display:flex;flex-direction:column;">
+      <div class="mtopbar">
+        <div class="msearch-wrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="search-input" type="text" placeholder="Search destination..." onkeydown="if(event.key==='Enter')searchMap()"/>
+          <button class="search-go" onclick="searchMap()">Go</button>
+        </div>
+        <button class="mbtn" onclick="locateMap()" title="My Location">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </button>
       </div>
-      <button class="mbtn" onclick="locateMap()" title="My Location">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-      </button>
+      <iframe id="map"
+        src="https://www.openstreetmap.org/export/embed.html?bbox=-0.27,51.74,-0.19,51.78&layer=mapnik&marker=51.7612,-0.2353"
+        style="width:100%;flex:1;border:none;display:block;"
+        allowfullscreen loading="lazy">
+      </iframe>
+      <div class="gpspill">
+        <div class="gdot" id="gdot"></div>
+        <span id="gtxt">GPS: waiting...</span>
+      </div>
     </div>
 
-    <!-- OpenStreetMap embed — free, no API key needed -->
-    <iframe id="map"
-      src="https://www.openstreetmap.org/export/embed.html?bbox=-0.27,51.74,-0.19,51.78&layer=mapnik&marker=51.7612,-0.2353"
-      style="width:100%;height:100%;border:none;display:block;padding-top:46px;"
-      allowfullscreen loading="lazy">
-    </iframe>
+    <!-- MUSIC PANEL — full Spotify -->
+    <div id="panel-music" style="position:absolute;inset:0;display:none;flex-direction:column;background:var(--panel);">
 
-    <div class="gpspill">
-      <div class="gdot" id="gdot"></div>
-      <span id="gtxt">GPS: waiting...</span>
+      <!-- NOW PLAYING -->
+      <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#1db954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          Now Playing
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <img id="m-art-big" src="" alt="" style="width:80px;height:80px;border-radius:12px;object-fit:cover;background:#ddd;box-shadow:0 4px 16px rgba(0,0,0,.2);flex-shrink:0;">
+          <div style="flex:1;min-width:0;">
+            <div id="m-title-big" style="font-size:18px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+            <div id="m-artist-big" style="font-size:13px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+              <span id="m-cur-big" style="font-size:11px;color:var(--muted);font-family:'Roboto Mono',monospace;">0:00</span>
+              <div id="m-pbar-big" style="flex:1;height:5px;background:var(--border);border-radius:3px;cursor:pointer;" onclick="seekSpBig(event)">
+                <div id="m-pfill-big" style="height:100%;background:#1db954;border-radius:3px;width:0%;pointer-events:none;"></div>
+              </div>
+              <span id="m-dur-big" style="font-size:11px;color:var(--muted);font-family:'Roboto Mono',monospace;">0:00</span>
+            </div>
+          </div>
+        </div>
+        <!-- Controls -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin-top:14px;">
+          <button onclick="spPrev()" style="background:none;border:none;cursor:pointer;color:var(--muted);display:flex;padding:6px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+          </button>
+          <button onclick="spToggle()" style="width:52px;height:52px;border-radius:50%;background:#1db954;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(29,185,84,.4);">
+            <svg id="m-pico-big" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button onclick="spNext()" style="background:none;border:none;cursor:pointer;color:var(--muted);display:flex;padding:6px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.14L8 14.14V9.86zM16 6h2v12h-2z"/></svg>
+          </button>
+        </div>
+        <!-- Volume -->
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:var(--muted)"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>
+          <div id="m-vol-big" style="flex:1;height:4px;background:var(--border);border-radius:2px;cursor:pointer;" onclick="setSpVolBig(event)">
+            <div id="m-vfill-big" style="height:100%;background:var(--muted);border-radius:2px;width:70%;pointer-events:none;"></div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:var(--muted)"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        </div>
+      </div>
+
+      <!-- QUEUE -->
+      <div style="flex:1;overflow-y:auto;min-height:0;">
+        <div style="padding:12px 20px 6px;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;">Up Next</div>
+        <div id="queue-list" style="display:flex;flex-direction:column;">
+          <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Queue loads when Spotify is playing...</div>
+        </div>
+      </div>
     </div>
+
+    <!-- ALERTS PANEL -->
+    <div id="panel-alerts" style="position:absolute;inset:0;display:none;flex-direction:column;background:var(--panel);overflow-y:auto;">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);font-size:15px;font-weight:600;">Alerts & Info</div>
+      <div style="padding:14px 20px;display:flex;flex-direction:column;gap:10px;">
+        <div style="background:var(--panel2);border-radius:10px;padding:12px 16px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Overspeed Threshold</div>
+          <div style="font-size:13px;color:var(--text);margin-top:4px;">Alert triggers at <strong>70 mph</strong> — red flash + beep</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:12px 16px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Range Warning</div>
+          <div style="font-size:13px;color:var(--text);margin-top:4px;">Amber below <strong>80 mi</strong> · Red below <strong>30 mi</strong></div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:12px 16px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">GPS Status</div>
+          <div style="font-size:13px;color:var(--text);margin-top:4px;" id="alert-gps-status">Waiting for GPS...</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:12px 16px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Session Distance</div>
+          <div style="font-size:13px;color:var(--text);margin-top:4px;"><span id="alert-session-dist">0.0</span> mi driven this session</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
+/* ── PANEL SWITCHING ── */
+function showPanel(name){
+  ['map','music','alerts'].forEach(p=>{
+    const el = document.getElementById('panel-'+p);
+    el.style.display = p===name ? 'flex' : 'none';
+  });
+  ['car','map','music','alerts'].forEach(b=>{
+    document.getElementById('bb-'+b)?.classList.toggle('on', b===name||(b==='car'&&name==='map'));
+  });
+  if(name==='map') locateMap();
+  if(name==='music') fetchQueue();
+  if(name==='alerts'){
+    document.getElementById('alert-gps-status').textContent = document.getElementById('gtxt').textContent;
+    document.getElementById('alert-session-dist').textContent = sessionDist.toFixed(2);
+  }
+}
+let sessionDist = 0;
+
+/* ── ODO EDIT ── */
+function editOdo(){
+  const cur = odo.toFixed(1);
+  const val = prompt(`Edit odometer reading (miles):\nCurrent: ${cur} mi\n\nEnter new value:`, cur);
+  if(val===null) return;
+  const n = parseFloat(val);
+  if(isNaN(n)||n<0){ alert('Invalid value'); return; }
+  odo = n;
+  localStorage.setItem('dash_odo', odo.toFixed(1));
+  document.getElementById('odov').textContent = fmtOdo(odo);
+}
+
 /* ── CLOCK ── */
 function tick(){
   const n=new Date(); let h=n.getHours(),m=n.getMinutes();
@@ -344,7 +460,8 @@ document.addEventListener('fullscreenchange',()=>{
 });
 
 /* ── GPS SPEED + ACCEL + RANGE ── */
-let odo=24187.3, lastC=null, lastSpd=0;
+let odo = parseFloat(localStorage.getItem('dash_odo')) || 24187.3;
+let lastC=null, lastSpd=0;
 let rangeFull=0, rangeCurrent=0, rangeSet=false;
 let overSpeedBeeping=false;
 const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
@@ -437,6 +554,8 @@ if(navigator.geolocation){
       const distM=haversine(lastC.lat,lastC.lon,pos.coords.latitude,pos.coords.longitude);
       const distMi=distM*0.000621371;
       odo+=distMi;
+      sessionDist+=distMi;
+      localStorage.setItem('dash_odo', odo.toFixed(1));
       document.getElementById('odov').textContent=fmtOdo(odo);
       updateRange(distMi);
     }
@@ -606,31 +725,81 @@ function fmt(ms){
 }
 function updateUI(state){
   const track = state.track_window.current_track;
-  document.getElementById('stitle').textContent = track.name;
-  document.getElementById('sartist').textContent = track.artists.map(a=>a.name).join(', ');
-  const art = track.album.images[0]?.url;
+  const art = track.album.images[0]?.url || '';
+  const title = track.name;
+  const artist = track.artists.map(a=>a.name).join(', ');
+  const isPaused = state.paused;
+  const pos = state.position;
+  const dur = track.duration_ms;
+  const pct = dur ? (pos/dur*100) : 0;
+  const playPath = isPaused ? '<path d="M8 5v14l11-7z"/>' : '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+  // left mini player
+  document.getElementById('stitle').textContent = title;
+  document.getElementById('sartist').textContent = artist;
   if(art) document.getElementById('artbox').src = art;
-  document.getElementById('tdur').textContent = fmt(track.duration_ms);
-  document.getElementById('tcur').textContent = fmt(state.position);
-  const pct = (state.position / track.duration_ms) * 100;
+  document.getElementById('tdur').textContent = fmt(dur);
+  document.getElementById('tcur').textContent = fmt(pos);
   document.getElementById('pfill').style.width = pct + '%';
-  document.getElementById('pico').innerHTML = state.paused
-    ? '<path d="M8 5v14l11-7z"/>'
-    : '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-  document.getElementById('mstatus').textContent = state.paused ? 'Paused' : '▶ Playing';
+  document.getElementById('pico').innerHTML = playPath;
+  document.getElementById('mstatus').textContent = isPaused ? 'Paused' : '▶ Playing';
+
+  // right big player
+  if(art) document.getElementById('m-art-big').src = art;
+  document.getElementById('m-title-big').textContent = title;
+  document.getElementById('m-artist-big').textContent = artist;
+  document.getElementById('m-dur-big').textContent = fmt(dur);
+  document.getElementById('m-cur-big').textContent = fmt(pos);
+  document.getElementById('m-pfill-big').style.width = pct + '%';
+  document.getElementById('m-pico-big').innerHTML = playPath;
 
   // live progress tick
   clearInterval(progTimer);
-  if(!state.paused){
-    let pos = state.position;
-    const dur = track.duration_ms;
+  if(!isPaused){
+    let p = pos;
     progTimer = setInterval(()=>{
-      pos += 1000;
-      if(pos >= dur){ clearInterval(progTimer); return; }
-      document.getElementById('tcur').textContent = fmt(pos);
-      document.getElementById('pfill').style.width = (pos/dur*100) + '%';
+      p += 1000;
+      if(p >= dur){ clearInterval(progTimer); return; }
+      const pc = (p/dur*100)+'%';
+      document.getElementById('tcur').textContent = fmt(p);
+      document.getElementById('pfill').style.width = pc;
+      document.getElementById('m-cur-big').textContent = fmt(p);
+      document.getElementById('m-pfill-big').style.width = pc;
     }, 1000);
   }
+
+  // fetch queue
+  fetchQueue();
+}
+
+async function fetchQueue(){
+  if(!spToken) return;
+  try{
+    const res = await spFetch('GET','https://api.spotify.com/v1/me/player/queue');
+    if(!res.ok) return;
+    const data = await res.json();
+    const items = data.queue?.slice(0,10) || [];
+    const list = document.getElementById('queue-list');
+    if(items.length===0){
+      list.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Queue is empty</div>';
+      return;
+    }
+    list.innerHTML = items.map((t,i)=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 20px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="spPlayTrack('${t.uri}')">
+        <div style="font-size:12px;color:var(--muted);width:16px;text-align:center;">${i+1}</div>
+        <img src="${t.album?.images?.[2]?.url||''}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;background:#ddd;flex-shrink:0;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+          <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.artists?.map(a=>a.name).join(', ')||''}</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Roboto Mono',monospace;">${fmt(t.duration_ms)}</div>
+      </div>`).join('');
+  } catch(e){}
+}
+
+async function spPlayTrack(uri){
+  if(!spDeviceId) return;
+  await spFetch('PUT',`https://api.spotify.com/v1/me/player/play?device_id=${spDeviceId}`,{uris:[uri]});
 }
 
 /* ── Controls ── */
@@ -644,10 +813,22 @@ async function seekSp(e){
   const pct = e.offsetX / document.getElementById('pbar').offsetWidth;
   await spFetch('PUT',`https://api.spotify.com/v1/me/player/seek?position_ms=${Math.round(pct*dur)}`);
 }
-
+async function seekSpBig(e){
+  if(!spState) return;
+  const dur = spState.track_window.current_track.duration_ms;
+  const pct = e.offsetX / document.getElementById('m-pbar-big').offsetWidth;
+  await spFetch('PUT',`https://api.spotify.com/v1/me/player/seek?position_ms=${Math.round(pct*dur)}`);
+}
 async function setSpVol(e){
   const pct = Math.max(0,Math.min(1, e.offsetX / document.getElementById('vtrack').offsetWidth));
   document.getElementById('vfill').style.width = (pct*100)+'%';
+  document.getElementById('m-vfill-big').style.width = (pct*100)+'%';
+  if(spPlayer) await spPlayer.setVolume(pct);
+}
+async function setSpVolBig(e){
+  const pct = Math.max(0,Math.min(1, e.offsetX / document.getElementById('m-vol-big').offsetWidth));
+  document.getElementById('vfill').style.width = (pct*100)+'%';
+  document.getElementById('m-vfill-big').style.width = (pct*100)+'%';
   if(spPlayer) await spPlayer.setVolume(pct);
 }
 
@@ -671,6 +852,7 @@ async function spFetch(method, url, body){
     spToken = saved;
     initSDK();
   }
+  document.getElementById('odov').textContent = fmtOdo(odo);
 })();
 
 /* ── DARK MODE ── */

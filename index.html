@@ -307,7 +307,13 @@
 <!-- Firebase -->
 <script type="module" src="js/firebase-init.js"></script>
 <!-- Google Maps -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHsoMoWhCPZH_yyHzb23g3ZPeJrHGA8po&libraries=places,directions&callback=initMap" async defer></script>
+<script>
+  // Must be global before Maps API loads
+  function initMap() {
+    if (window._mapInit) window._mapInit();
+  }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHsoMoWhCPZH_yyHzb23g3ZPeJrHGA8po&libraries=places&callback=initMap" async defer></script>
 <!-- Spotify SDK -->
 <script src="https://sdk.scdn.co/spotify-player.js"></script>
 <!-- App modules -->

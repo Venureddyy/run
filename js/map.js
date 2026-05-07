@@ -8,8 +8,8 @@ let stepIndex = 0;
 let userLat = null, userLon = null;
 let navInterval = null;
 
-// Called by Google Maps API callback
-window.initMap = function () {
+// Called by Google Maps API callback via window.initMap → window._mapInit
+window._mapInit = function () {
   const center = { lat: 51.7612, lng: -0.2353 }; // Hertfordshire default
 
   map = new google.maps.Map(document.getElementById('map'), {

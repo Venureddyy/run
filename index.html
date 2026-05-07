@@ -13,7 +13,18 @@
   --text:#1a1a1a; --muted:#888; --blue:#3e88e8; --blue-d:#1a5fc8;
   --red:#e03c3c; --green:#28a745;
 }
-html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); font-family:'Roboto',sans-serif; color:var(--text); }
+body.dark {
+  --bg:#111; --panel:#1a1a1a; --panel2:#242424; --border:#333;
+  --text:#f0f0f0; --muted:#666; --blue:#4a9eff; --blue-d:#2277dd;
+  --red:#ff4444; --green:#2ecc71;
+}
+body.dark .mtopbar { background:rgba(20,20,20,.95); }
+body.dark #map { filter:invert(0.9) hue-rotate(180deg); }
+body.dark .gpspill { background:rgba(255,255,255,.12); color:var(--text); }
+body.dark .mbtn { background:#2a2a2a; color:var(--blue); }
+body.dark .range-bar-wrap { background:#333; }
+body.dark .pbar,.vtrack { background:#333; }
+html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); font-family:'Roboto',sans-serif; color:var(--text); transition:background .3s, color .3s; }
 .root { width:100%; height:100%; display:grid; grid-template-columns:340px 1fr; }
 
 /* LEFT */
@@ -44,7 +55,7 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); fo
 
 /* speed */
 .speed-sec { display:flex; flex-direction:column; align-items:center; padding:2px 0 0; flex-shrink:0; }
-#spd { font-size:88px; font-weight:300; line-height:1; letter-spacing:-4px; transition:color .3s; font-variant-numeric:tabular-nums; }
+#spd { font-size:112px; font-weight:300; line-height:1; letter-spacing:-5px; transition:color .3s; font-variant-numeric:tabular-nums; }
 #spd.over { color:var(--red); }
 .mph { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:3px; }
 
@@ -97,7 +108,31 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); fo
 .vtrack { flex:1; height:4px; background:#ddd; border-radius:2px; cursor:pointer; }
 .vfill { height:100%; background:var(--muted); border-radius:2px; width:70%; pointer-events:none; }
 
-/* bottom bar */
+/* speed flash animation */
+.speed-sec { position:relative; }
+#spd-flash { position:absolute; inset:-12px -20px; border-radius:16px; pointer-events:none; opacity:0; transition:opacity .2s; }
+#spd-flash.accel { background:rgba(224,60,60,0.18); opacity:1; animation:flashpulse .4s ease-out; }
+#spd-flash.overspeed { background:rgba(224,60,60,0.45); opacity:1; animation:none; }
+@keyframes flashpulse { 0%{opacity:.8;} 100%{opacity:0;} }
+
+/* range tracker */
+.range-track { margin:3px 14px 0; flex-shrink:0; background:var(--panel2); border-radius:10px; padding:7px 12px; }
+.range-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.range-lbl { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+.range-val-row { display:flex; align-items:baseline; gap:3px; }
+#range-mi { font-size:18px; font-weight:700; font-family:'Roboto Mono',monospace; color:var(--text); }
+#range-mi.low { color:var(--red); }
+.range-unit { font-size:10px; color:var(--muted); }
+.range-bar-wrap { height:5px; background:#e0e0e0; border-radius:3px; overflow:hidden; }
+.range-bar-fill { height:100%; background:var(--green); border-radius:3px; transition:width .5s; }
+#range-bar-fill.low { background:var(--red); }
+.range-btns { display:flex; gap:6px; margin-top:5px; }
+.range-input-wrap { display:flex; align-items:center; gap:4px; flex:1; background:#e8e8e8; border-radius:8px; padding:3px 8px; }
+#range-input { background:none; border:none; outline:none; font-size:12px; font-family:'Roboto Mono',monospace; color:var(--text); width:60px; }
+.range-set-btn { background:var(--blue); color:#fff; border:none; border-radius:6px; font-size:11px; font-weight:600; padding:3px 9px; cursor:pointer; white-space:nowrap; }
+.range-set-btn:active { background:var(--blue-d); }
+.refuel-btn { background:#f0f0f0; color:var(--text); border:none; border-radius:6px; font-size:11px; font-weight:600; padding:3px 9px; cursor:pointer; border:1px solid var(--border); }
+.refuel-btn:active { background:var(--green); color:#fff; border-color:var(--green); }
 .bbar { border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-around; padding:7px 4px; flex-shrink:0; }
 .bb { display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; cursor:pointer; color:var(--muted); font-size:9px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; padding:3px 8px; border-radius:7px; transition:all .2s; }
 .bb svg { width:17px; height:17px; }
@@ -135,6 +170,11 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); fo
         <span class="temp">72°F</span>
       </div>
       <div class="tr">
+        <button class="fs-btn" onclick="toggleDark()" id="dark-btn" title="Dark/Light mode">
+          <svg id="dark-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
         <button class="fs-btn" onclick="toggleFS()" title="Fullscreen">
           <svg id="fsico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
@@ -149,38 +189,34 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); fo
 
     <div class="gear">
       <div class="gears"><span>P</span><span>R</span><span>N</span><span class="on">D</span></div>
-      <div class="rng">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        <strong>247 mi</strong>
-      </div>
+      <div class="odo-l" style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">ODOMETER</div>
+      <div id="odov" style="font-family:'Roboto Mono',monospace;font-size:13px;font-weight:500;">024,187.3 mi</div>
     </div>
 
     <div class="speed-sec">
+      <div id="spd-flash"></div>
       <div id="spd">0</div>
       <div class="mph">MPH</div>
     </div>
 
-    <div class="lim-row">
-      <div style="width:48px;height:48px;border-radius:50%;border:2.5px solid var(--blue);display:flex;align-items:center;justify-content:center;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="var(--blue)" stroke="none"/></svg>
-      </div>
-      <div class="setwrap">
-        <span class="setlbl">Set Speed</span>
-        <div class="setctrl">
-          <button onclick="chg(-1)">−</button>
-          <span id="setval">65</span>
-          <button onclick="chg(1)">+</button>
+    <!-- RANGE TRACKER -->
+    <div class="range-track">
+      <div class="range-top">
+        <span class="range-lbl">Range</span>
+        <div class="range-val-row">
+          <span id="range-mi">—</span>
+          <span class="range-unit">mi left</span>
         </div>
       </div>
-      <div class="sl">
-        <span class="sl-l">SPEED<br>LIMIT</span>
-        <span class="sl-n" id="slimit">65</span>
+      <div class="range-bar-wrap"><div class="range-bar-fill" id="range-bar-fill" style="width:100%"></div></div>
+      <div class="range-btns">
+        <div class="range-input-wrap">
+          <input id="range-input" type="number" placeholder="e.g. 400" min="1" max="999"/>
+          <span style="font-size:10px;color:var(--muted)">mi</span>
+        </div>
+        <button class="range-set-btn" onclick="setRange()">Set</button>
+        <button class="refuel-btn" onclick="refuel()">⛽ Refuel</button>
       </div>
-    </div>
-
-    <div class="odo">
-      <div class="odo-l">Odometer</div>
-      <div id="odov">024,187.3 mi</div>
     </div>
 
     <!-- MUSIC — Spotify -->
@@ -307,8 +343,12 @@ document.addEventListener('fullscreenchange',()=>{
     document.getElementById('fsico').innerHTML='<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>';
 });
 
-/* ── GPS SPEED ── */
-let odo=24187.3, lastC=null;
+/* ── GPS SPEED + ACCEL + RANGE ── */
+let odo=24187.3, lastC=null, lastSpd=0;
+let rangeFull=0, rangeCurrent=0, rangeSet=false;
+let overSpeedBeeping=false;
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+
 function haversine(a,b,c,d){
   const R=6371000,r=Math.PI/180,dL=(c-a)*r,dN=(d-b)*r;
   const x=Math.sin(dL/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dN/2)**2;
@@ -318,17 +358,87 @@ function fmtOdo(v){
   const[i,d]=v.toFixed(1).split('.');
   return i.replace(/\B(?=(\d{3})+(?!\d))/g,',')+'.'+d+' mi';
 }
+function beepOverspeed(){
+  if(overSpeedBeeping) return;
+  overSpeedBeeping=true;
+  function beep(){
+    if(!overSpeedBeeping) return;
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value=880; o.type='square';
+    g.gain.setValueAtTime(0.3,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.3);
+    o.start(); o.stop(audioCtx.currentTime+0.3);
+    setTimeout(beep,600);
+  }
+  beep();
+}
+function stopBeep(){ overSpeedBeeping=false; }
+
+function updateRange(distMi){
+  if(!rangeSet) return;
+  rangeCurrent=Math.max(0,rangeCurrent-distMi);
+  const pct=rangeFull>0?(rangeCurrent/rangeFull)*100:100;
+  const el=document.getElementById('range-mi');
+  const bar=document.getElementById('range-bar-fill');
+  el.textContent=rangeCurrent.toFixed(1);
+  el.classList.toggle('low',rangeCurrent<30);
+  bar.style.width=pct+'%';
+  bar.style.background=rangeCurrent<30?'var(--red)':rangeCurrent<80?'var(--amber,#f5a623)':'var(--green)';
+}
+function setRange(){
+  const v=parseFloat(document.getElementById('range-input').value);
+  if(!v||v<=0) return;
+  rangeFull=v; rangeCurrent=v; rangeSet=true;
+  document.getElementById('range-mi').textContent=v.toFixed(1);
+  document.getElementById('range-bar-fill').style.width='100%';
+  document.getElementById('range-input').value='';
+  document.getElementById('range-input').blur();
+}
+function refuel(){
+  if(!rangeSet){alert('Set your range first');return;}
+  rangeCurrent=rangeFull;
+  document.getElementById('range-mi').textContent=rangeFull.toFixed(1);
+  document.getElementById('range-mi').classList.remove('low');
+  document.getElementById('range-bar-fill').style.width='100%';
+  document.getElementById('range-bar-fill').style.background='var(--green)';
+}
+
 if(navigator.geolocation){
   navigator.geolocation.watchPosition(pos=>{
     const mph=pos.coords.speed>0?pos.coords.speed*2.23694:0;
     const r=Math.round(mph);
     document.getElementById('spd').textContent=r;
-    document.getElementById('spd').classList.toggle('over',r>+document.getElementById('slimit').textContent&&r>0);
     document.getElementById('gdot').classList.add('ok');
     document.getElementById('gtxt').textContent=`GPS ✓  acc:${Math.round(pos.coords.accuracy)}m`;
+
+    // acceleration flash
+    const flash=document.getElementById('spd-flash');
+    const delta=r-lastSpd;
+    if(r>=70){
+      flash.className='overspeed';
+      document.getElementById('spd').style.color='var(--red)';
+      beepOverspeed();
+    } else {
+      document.getElementById('spd').style.color='';
+      stopBeep();
+      if(delta>=8){
+        flash.className='accel';
+        setTimeout(()=>{flash.className='';},500);
+      } else {
+        flash.className='';
+      }
+    }
+    lastSpd=r;
+
+    // odo + range
     if(lastC){
-      odo+=haversine(lastC.lat,lastC.lon,pos.coords.latitude,pos.coords.longitude)*0.000621371;
+      const distM=haversine(lastC.lat,lastC.lon,pos.coords.latitude,pos.coords.longitude);
+      const distMi=distM*0.000621371;
+      odo+=distMi;
       document.getElementById('odov').textContent=fmtOdo(odo);
+      updateRange(distMi);
     }
     lastC={lat:pos.coords.latitude,lon:pos.coords.longitude};
   },err=>{
@@ -338,10 +448,6 @@ if(navigator.geolocation){
 } else {
   document.getElementById('gtxt').textContent='GPS not supported';
 }
-
-/* ── SET SPEED ── */
-let sv=65;
-function chg(d){sv=Math.min(120,Math.max(0,sv+d));document.getElementById('setval').textContent=sv;}
 
 /* ── SEARCH MAP ── */
 async function searchMap(){
@@ -371,7 +477,7 @@ function locateMap(){
 
 /* ══ SPOTIFY ══ */
 const CLIENT_ID = '9ccf3c3270234334b3c74317f5ebd466';
-const REDIRECT   = 'https://venureddyy.github.io/car/';
+const REDIRECT   = 'https://venureddyy.github.io/run/';
 const SCOPES     = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
 
 let spToken = null, spPlayer = null, spDeviceId = null;
@@ -380,7 +486,9 @@ let spState = null, progTimer = null;
 /* ── Auth ── */
 function spotifyLogin(){
   const verifier = generateVerifier(128);
-  sessionStorage.setItem('sp_verifier', verifier);
+  localStorage.setItem('sp_verifier', verifier);
+  localStorage.removeItem('sp_token');
+  localStorage.removeItem('sp_refresh');
   generateChallenge(verifier).then(challenge=>{
     const url = new URL('https://accounts.spotify.com/authorize');
     url.searchParams.set('client_id', CLIENT_ID);
@@ -405,7 +513,8 @@ async function generateChallenge(verifier){
 }
 
 async function exchangeCode(code){
-  const verifier = sessionStorage.getItem('sp_verifier');
+  const verifier = localStorage.getItem('sp_verifier');
+  if(!verifier){ console.error('No verifier found'); return; }
   const res = await fetch('https://accounts.spotify.com/api/token',{
     method:'POST',
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
@@ -419,16 +528,19 @@ async function exchangeCode(code){
   const data = await res.json();
   if(data.access_token){
     spToken = data.access_token;
-    sessionStorage.setItem('sp_token', spToken);
-    if(data.refresh_token) sessionStorage.setItem('sp_refresh', data.refresh_token);
-    // clean URL
+    localStorage.setItem('sp_token', spToken);
+    if(data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token);
+    localStorage.removeItem('sp_verifier');
     window.history.replaceState({}, '', REDIRECT);
     initSDK();
+  } else {
+    console.error('Token exchange failed:', data);
+    document.getElementById('mstatus') && (document.getElementById('mstatus').textContent = 'Auth failed – try again');
   }
 }
 
 async function refreshToken(){
-  const rt = sessionStorage.getItem('sp_refresh');
+  const rt = localStorage.getItem('sp_refresh');
   if(!rt) return;
   const res = await fetch('https://accounts.spotify.com/api/token',{
     method:'POST',
@@ -442,7 +554,7 @@ async function refreshToken(){
   const data = await res.json();
   if(data.access_token){
     spToken = data.access_token;
-    sessionStorage.setItem('sp_token', spToken);
+    localStorage.setItem('sp_token', spToken);
   }
 }
 
@@ -548,20 +660,33 @@ async function spFetch(method, url, body){
   return res;
 }
 
-/* ── Boot: check for callback code or saved token ── */
+/* ── Boot ── */
 (function boot(){
   const params = new URLSearchParams(window.location.search);
   const code   = params.get('code');
-  const saved  = sessionStorage.getItem('sp_token');
-
+  const saved  = localStorage.getItem('sp_token');
   if(code){
     exchangeCode(code);
   } else if(saved){
     spToken = saved;
     initSDK();
   }
-  // else: show login button (default state)
 })();
+
+/* ── DARK MODE ── */
+let dark = localStorage.getItem('dash_dark') === '1';
+function applyDark(){
+  document.body.classList.toggle('dark', dark);
+  document.getElementById('dark-ico').innerHTML = dark
+    ? '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+}
+function toggleDark(){
+  dark=!dark;
+  localStorage.setItem('dash_dark', dark?'1':'0');
+  applyDark();
+}
+applyDark();
 </script>
 </body>
 </html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Car Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
+    </div>
+    <h1>Car Dashboard</h1>
+    <p>Sign in to sync your data across devices</p>
+    <button id="google-signin-btn" onclick="signInWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Sign in with Google
+    </button>
+    <button id="guest-btn" onclick="continueAsGuest()">Continue as Guest</button>
+    <p class="login-note">Guest mode stores data locally only</p>
+  </div>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<div id="dashboard" style="display:none;">
+  <div class="root">
+
+    <!-- ════ LEFT PANEL ════ -->
+    <div class="left">
+
+      <!-- TOP BAR -->
+      <div class="topbar">
+        <div class="tl">
+          <span id="clock">--:-- --</span>
+          <span class="temp" id="weather-temp">72°F</span>
+        </div>
+        <div class="tr">
+          <div class="user-avatar" id="user-avatar" onclick="showUserMenu()" title="Account"></div>
+          <button class="icon-btn" onclick="toggleDark()" title="Dark/Light">
+            <svg id="dark-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <button class="icon-btn" onclick="toggleFS()" title="Fullscreen">
+            <svg id="fs-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- GEAR + ODO -->
+      <div class="gear-row">
+        <div class="gears">
+          <span>P</span><span>R</span><span>N</span><span class="on">D</span>
+        </div>
+        <div class="odo-wrap">
+          <div class="odo-lbl">ODO</div>
+          <div class="odo-val-row">
+            <span id="odo-display">0.0 mi</span>
+            <button class="edit-btn" onclick="editOdo()" title="Edit">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SPEED -->
+      <div class="speed-wrap">
+        <div id="spd-flash"></div>
+        <div id="spd">0</div>
+        <div class="mph-label">MPH</div>
+        <div class="speed-sub-row">
+          <div class="gps-badge">
+            <div class="gps-dot" id="gps-dot"></div>
+            <span id="gps-acc">GPS</span>
+          </div>
+          <div id="overspeed-badge" class="overspeed-badge" style="display:none;">⚠ OVER 70</div>
+        </div>
+      </div>
+
+      <!-- RANGE -->
+      <div class="range-card">
+        <div class="range-header">
+          <span class="card-label">RANGE</span>
+          <span id="range-display" class="range-val">— mi left</span>
+        </div>
+        <div class="range-bar-track">
+          <div id="range-bar" class="range-bar-fill" style="width:100%"></div>
+        </div>
+        <div class="range-inputs">
+          <input id="range-input" type="number" placeholder="Miles (e.g. 400)" min="1" max="999"/>
+          <button class="btn-set" onclick="setRange()">Set</button>
+          <button class="btn-refuel" onclick="refuel()">⛽</button>
+        </div>
+      </div>
+
+      <!-- SPOTIFY MINI PLAYER -->
+      <div class="music-card" id="music-card">
+        <div id="sp-login-mini">
+          <div class="card-label" style="margin-bottom:8px;">SPOTIFY</div>
+          <button class="sp-connect-btn" onclick="spotifyLogin()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+            Connect Spotify
+          </button>
+        </div>
+        <div id="sp-player-mini" style="display:none;">
+          <div class="mini-player-top">
+            <div class="card-label">SPOTIFY</div>
+            <span id="mini-status" class="mini-status">●</span>
+          </div>
+          <div class="mini-art-row">
+            <img id="mini-art" src="" alt="" class="mini-art">
+            <div class="mini-meta">
+              <div id="mini-title" class="mini-title">—</div>
+              <div id="mini-artist" class="mini-artist">—</div>
+            </div>
+          </div>
+          <div class="mini-prog-row">
+            <span id="mini-cur" class="t-lbl">0:00</span>
+            <div class="mini-prog-bar" onclick="seekSp(event)" id="mini-pbar">
+              <div id="mini-pfill" class="mini-prog-fill"></div>
+            </div>
+            <span id="mini-dur" class="t-lbl">0:00</span>
+          </div>
+          <div class="mini-controls">
+            <button class="ctrl-btn" onclick="spPrev()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+            <button class="ctrl-btn play" onclick="spToggle()"><svg id="mini-pico" width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></button>
+            <button class="ctrl-btn" onclick="spNext()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.14L8 14.14V9.86zM16 6h2v12h-2z"/></svg></button>
+          </div>
+          <div class="vol-row">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="color:var(--muted)"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>
+            <div class="vol-track" onclick="setSpVol(event)" id="vol-track"><div id="vol-fill" class="vol-fill" style="width:70%"></div></div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="color:var(--muted)"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM NAV -->
+      <div class="bottom-nav">
+        <button class="nav-btn on" id="nb-car" onclick="showPanel('car')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+          Car
+        </button>
+        <button class="nav-btn" id="nb-map" onclick="showPanel('map')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          Map
+        </button>
+        <button class="nav-btn" id="nb-music" onclick="showPanel('music')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          Music
+        </button>
+        <button class="nav-btn" id="nb-alerts" onclick="showPanel('alerts')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+          Alerts
+        </button>
+      </div>
+    </div>
+
+    <!-- ════ RIGHT PANEL ════ -->
+    <div class="right">
+
+      <!-- MAP PANEL -->
+      <div id="panel-map" class="panel active">
+        <div class="map-topbar">
+          <div class="search-wrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input id="search-input" type="text" placeholder="Search destination..." autocomplete="off"/>
+            <div id="search-suggestions" class="suggestions"></div>
+          </div>
+          <button class="map-btn" onclick="searchAndRoute()" title="Search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </button>
+          <button class="map-btn" onclick="locateMe()" title="My Location">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </button>
+          <button class="map-btn" id="nav-btn" onclick="startNavigation()" title="Navigate" style="display:none;background:var(--green);color:#fff;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3L3 10.53v.98l6.84 2.65L12.48 21h.98L21 3z"/></svg>
+          </button>
+          <button class="map-btn" id="clear-nav-btn" onclick="clearRoute()" title="Clear" style="display:none;background:var(--red);color:#fff;">✕</button>
+        </div>
+        <div id="map" style="flex:1;"></div>
+        <!-- Turn by turn instruction -->
+        <div id="turn-card" class="turn-card" style="display:none;">
+          <div id="turn-icon" class="turn-icon">→</div>
+          <div class="turn-info">
+            <div id="turn-dist" class="turn-dist">—</div>
+            <div id="turn-street" class="turn-street">—</div>
+          </div>
+          <div class="turn-eta">
+            <div id="eta-time" class="eta-val">—</div>
+            <div class="eta-lbl">ETA</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MUSIC PANEL -->
+      <div id="panel-music" class="panel">
+        <div class="music-panel-inner">
+          <div id="music-not-connected" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="#1db954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+            <div style="font-size:18px;font-weight:600;">Connect Spotify</div>
+            <button class="sp-connect-btn large" onclick="spotifyLogin()">Sign in with Spotify</button>
+          </div>
+          <div id="music-connected" style="display:none;flex-direction:column;height:100%;">
+            <!-- Now Playing -->
+            <div class="now-playing-section">
+              <div class="section-label">NOW PLAYING</div>
+              <div class="now-playing-card">
+                <img id="big-art" src="" alt="" class="big-art">
+                <div class="now-playing-meta">
+                  <div id="big-title" class="big-title">—</div>
+                  <div id="big-artist" class="big-artist">—</div>
+                  <div id="big-album" class="big-album">—</div>
+                </div>
+              </div>
+              <div class="big-prog-row">
+                <span id="big-cur" class="t-lbl">0:00</span>
+                <div class="big-prog-bar" onclick="seekSpBig(event)" id="big-pbar">
+                  <div id="big-pfill" class="big-prog-fill"></div>
+                </div>
+                <span id="big-dur" class="t-lbl">0:00</span>
+              </div>
+              <div class="big-controls">
+                <button class="ctrl-btn" onclick="spPrev()"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+                <button class="ctrl-btn play big" onclick="spToggle()">
+                  <svg id="big-pico" width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <button class="ctrl-btn" onclick="spNext()"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2-8.14 5.5 3.14L8 14.14V9.86zM16 6h2v12h-2z"/></svg></button>
+              </div>
+              <div class="vol-row" style="padding:0 4px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="color:var(--muted)"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>
+                <div class="vol-track" onclick="setSpVolBig(event)" id="vol-track-big"><div id="vol-fill-big" class="vol-fill" style="width:70%"></div></div>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="color:var(--muted)"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              </div>
+            </div>
+            <!-- Queue -->
+            <div class="queue-section">
+              <div class="section-label">UP NEXT <button onclick="fetchQueue()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;margin-left:6px;">↻ refresh</button></div>
+              <div id="queue-list" class="queue-list">
+                <div class="queue-empty">Play something on Spotify to see queue</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTS PANEL -->
+      <div id="panel-alerts" class="panel">
+        <div class="alerts-inner">
+          <div class="section-label" style="padding:16px 20px 8px;">TRIP INFO</div>
+          <div class="alert-grid">
+            <div class="alert-card">
+              <div class="alert-card-label">Session Distance</div>
+              <div class="alert-card-val"><span id="a-session">0.0</span> mi</div>
+            </div>
+            <div class="alert-card">
+              <div class="alert-card-label">GPS Accuracy</div>
+              <div class="alert-card-val" id="a-gps">—</div>
+            </div>
+            <div class="alert-card">
+              <div class="alert-card-label">Top Speed</div>
+              <div class="alert-card-val"><span id="a-top">0</span> mph</div>
+            </div>
+            <div class="alert-card">
+              <div class="alert-card-label">Range Left</div>
+              <div class="alert-card-val" id="a-range">— mi</div>
+            </div>
+          </div>
+          <div class="section-label" style="padding:16px 20px 8px;">SETTINGS</div>
+          <div class="settings-list">
+            <div class="setting-row">
+              <span>Overspeed Alert</span>
+              <span class="setting-val">70 mph</span>
+            </div>
+            <div class="setting-row">
+              <span>Range Warning</span>
+              <span class="setting-val">Below 30 mi</span>
+            </div>
+            <div class="setting-row">
+              <span>Account</span>
+              <span class="setting-val" id="a-user">Guest</span>
+            </div>
+            <div class="setting-row" style="cursor:pointer;" onclick="signOut()">
+              <span style="color:var(--red)">Sign Out</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right -->
+  </div><!-- /root -->
+</div><!-- /dashboard -->
+
+<!-- User menu -->
+<div id="user-menu" class="user-menu" style="display:none;">
+  <div id="um-name" style="font-weight:600;margin-bottom:4px;">—</div>
+  <div id="um-email" style="font-size:11px;color:var(--muted);margin-bottom:10px;">—</div>
+  <button onclick="signOut()" style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;">Sign Out</button>
+</div>
+
+<!-- Firebase -->
+<script type="module" src="js/firebase-init.js"></script>
+<!-- Google Maps -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHsoMoWhCPZH_yyHzb23g3ZPeJrHGA8po&libraries=places,directions&callback=initMap" async defer></script>
+<!-- Spotify SDK -->
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
+<!-- App modules -->
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>

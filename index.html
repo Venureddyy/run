@@ -149,80 +149,15 @@ body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
 </div>
 
 <!-- ════ SPOTIFY PANEL ════ -->
-<div id="spotPanel">
-
-  <!-- Not logged in -->
-  <div id="spotLogin">
-    <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="#1db954" stroke-width="1.5"/>
-      <path d="M8 12.5c2.5-1.5 6-1.5 8 0" stroke="#1db954" stroke-width="2" stroke-linecap="round"/>
-      <path d="M7 9.5c3.5-2 8-2 10 0" stroke="#1db954" stroke-width="2" stroke-linecap="round"/>
-      <path d="M9 15.5c2-1 5-1 6.5 0" stroke="#1db954" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    <div style="text-align:center">
-      <div style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:6px">Connect Spotify</div>
-      <div style="font-size:13px;color:var(--subtext)">Stream music while you drive</div>
-    </div>
-    <button class="spot-connect-btn" onclick="spotifyLogin()">Connect</button>
-  </div>
-
-  <!-- Player (shown after login) -->
-  <div id="spotPlayer">
-
-    <!-- Now playing header -->
-    <div class="spot-header">
-      <img id="spotArt" class="spot-art" src="" alt="">
-      <div class="spot-header-info">
-        <div class="spot-track" id="spotTrack">Nothing playing</div>
-        <div class="spot-artist" id="spotArtist">--</div>
-      </div>
-      <svg onclick="spotLike()" style="cursor:pointer;flex-shrink:0;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--subtext)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-    </div>
-
-    <!-- Progress -->
-    <div class="spot-prog-wrap">
-      <div class="spot-prog-bar"><div class="spot-prog-fill" id="spotProgFill" style="width:0%"></div></div>
-      <div class="spot-times">
-        <span id="spotPosTime">0:00</span>
-        <span id="spotDurTime">0:00</span>
-      </div>
-    </div>
-
-    <!-- Controls -->
-    <div class="spot-controls">
-      <button class="sp-btn" onclick="spotPrev()">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
-      </button>
-      <button class="sp-btn play" onclick="spotToggle()">
-        <svg id="spotPlayIco" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
-      </button>
-      <button class="sp-btn" onclick="spotNext()">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg>
-      </button>
-    </div>
-
-    <!-- Search -->
-    <div class="spot-search-wrap">
-      <div class="spot-search-inner">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="spotSearchInp" type="text" placeholder="Songs, artists, albums…" onkeydown="if(event.key==='Enter')doSpotSearch()">
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div class="spot-tabs">
-      <div class="spot-tab active" onclick="setTab(this)">Streaming</div>
-      <div class="spot-tab" onclick="setTab(this)">Radio</div>
-      <div class="spot-tab" onclick="setTab(this)">USB</div>
-    </div>
-
-    <!-- Grid results -->
-    <div class="spot-grid-wrap" id="spotGridWrap">
-      <div class="spot-section-title">Recent</div>
-      <div class="spot-grid" id="spotGrid"></div>
-    </div>
-
-  </div><!-- /spotPlayer -->
+<div id="spotPanel" style="display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:var(--bg);">
+  <!-- Spotify iframe — full Spotify web player -->
+  <iframe id="spotIframe"
+    src="https://open.spotify.com/embed/playlist/37i9dQZF1DX0BF4ezvoh8P?utm_source=generator&theme=0"
+    width="100%" height="100%"
+    style="border:none;flex:1;"
+    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+    loading="lazy">
+  </iframe>
 </div><!-- /spotPanel -->
 </div><!-- /shell -->
 
@@ -295,108 +230,7 @@ let fsOn=false;
 function toggleFS(){if(!fsOn)(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);else(document.exitFullscreen||document.webkitExitFullscreen).call(document);fsOn=!fsOn;}
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)fsOn=false;});
 
-// Spotify PKCE
-async function sha256(v){const e=new TextEncoder().encode(v);const h=await crypto.subtle.digest('SHA-256',e);return btoa(String.fromCharCode(...new Uint8Array(h))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
-function rnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');}
-
-async function spotifyLogin(){
-  const t=localStorage.getItem('sp_tok'),e=localStorage.getItem('sp_tok_exp');
-  if(t&&e&&Date.now()<parseInt(e)){S.spotToken=t;initPlayer();return;}
-  const v=rnd(32),c=await sha256(v);
-  localStorage.setItem('sp_verifier',v);
-  const u=new URL('https://accounts.spotify.com/authorize');
-  u.searchParams.set('client_id',SPOT_CLIENT);u.searchParams.set('response_type','code');
-  u.searchParams.set('redirect_uri',SPOT_REDIRECT);u.searchParams.set('scope',SPOT_SCOPES);
-  u.searchParams.set('code_challenge_method','S256');u.searchParams.set('code_challenge',c);
-  location.href=u.toString();
-}
-async function handleCallback(code){
-  const v=localStorage.getItem('sp_verifier');if(!v)return;
-  try{
-    const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:SPOT_REDIRECT,client_id:SPOT_CLIENT,code_verifier:v})});
-    const d=await r.json();
-    if(d.access_token){localStorage.setItem('sp_tok',d.access_token);localStorage.setItem('sp_tok_exp',Date.now()+d.expires_in*1000);if(d.refresh_token)localStorage.setItem('sp_refresh',d.refresh_token);localStorage.removeItem('sp_verifier');history.replaceState({},document.title,location.pathname);S.spotToken=d.access_token;initPlayer();}
-  }catch(e){console.error(e);}
-}
-
-function initPlayer(){
-  document.getElementById('spotLogin').style.display='none';
-  document.getElementById('spotPlayer').style.display='flex';
-  document.getElementById('spotPlayer').style.flexDirection='column';
-  document.getElementById('spotPlayer').style.height='100%';
-  pollSpot();loadRecentTracks();
-  setInterval(pollSpot,3000);
-  setInterval(()=>{if(S.spotPlaying&&S.spotDur>0){S.spotPos=Math.min(S.spotPos+1000,S.spotDur);updateProg();}},1000);
-}
-
-async function spFetch(ep,method='GET',body=null){
-  const opts={method,headers:{'Authorization':'Bearer '+S.spotToken,'Content-Type':'application/json'}};
-  if(body)opts.body=JSON.stringify(body);
-  const r=await fetch('https://api.spotify.com/v1'+ep,opts);
-  if(r.status===204||r.status===202)return null;if(!r.ok)return null;
-  try{return await r.json();}catch{return null;}
-}
-
-function fmtMs(ms){if(!ms)return'0:00';const s=Math.floor(ms/1000),m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
-
-async function pollSpot(){
-  const d=await spFetch('/me/player');if(!d)return;
-  S.spotPlaying=d.is_playing;S.spotDur=d.item?.duration_ms||0;S.spotPos=d.progress_ms||0;
-  const it=d.item;
-  if(it){
-    document.getElementById('spotTrack').textContent=it.name||'--';
-    document.getElementById('spotArtist').textContent=it.artists?.map(a=>a.name).join(', ')||'--';
-    const art=it.album?.images?.[0]?.url;if(art)document.getElementById('spotArt').src=art;
-  }
-  updateProg();
-  document.getElementById('spotPlayIco').innerHTML=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';
-}
-
-function updateProg(){
-  const pct=S.spotDur>0?S.spotPos/S.spotDur*100:0;
-  const f=document.getElementById('spotProgFill');if(f)f.style.width=pct+'%';
-  document.getElementById('spotPosTime').textContent=fmtMs(S.spotPos);
-  document.getElementById('spotDurTime').textContent=fmtMs(S.spotDur);
-}
-
-async function spotToggle(){await spFetch(S.spotPlaying?'/me/player/pause':'/me/player/play','PUT');S.spotPlaying=!S.spotPlaying;document.getElementById('spotPlayIco').innerHTML=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';}
-async function spotNext(){await spFetch('/me/player/next','POST');setTimeout(pollSpot,600);}
-async function spotPrev(){await spFetch('/me/player/previous','POST');setTimeout(pollSpot,600);}
-function spotLike(){}
-
-function setTab(el){document.querySelectorAll('.spot-tab').forEach(t=>{t.classList.remove('active');});el.classList.add('active');}
-
-async function loadRecentTracks(){
-  if(!S.spotToken)return;
-  try{
-    const d=await spFetch('/me/top/tracks?limit=20&time_range=short_term');
-    const grid=document.getElementById('spotGrid');grid.innerHTML='';
-    const title=grid.previousElementSibling;if(title)title.textContent='Top Tracks';
-    (d?.items||[]).forEach(t=>{
-      const div=document.createElement('div');div.className='spot-grid-item';
-      div.innerHTML=`<img src="${t.album?.images?.[0]?.url||''}" alt=""><div class="sg-name">${t.name}</div><div class="sg-sub">${t.artists?.[0]?.name||''}</div>`;
-      div.onclick=()=>playTrack(t.uri);
-      grid.appendChild(div);
-    });
-  }catch(e){}
-}
-
-async function doSpotSearch(){
-  const q=document.getElementById('spotSearchInp').value.trim();if(!q)return;
-  try{
-    const d=await spFetch(`/search?q=${encodeURIComponent(q)}&type=track&limit=20`);
-    const grid=document.getElementById('spotGrid');grid.innerHTML='';
-    const title=grid.previousElementSibling;if(title)title.textContent='Results';
-    (d?.tracks?.items||[]).forEach(t=>{
-      const div=document.createElement('div');div.className='spot-grid-item';
-      div.innerHTML=`<img src="${t.album?.images?.[0]?.url||''}" alt=""><div class="sg-name">${t.name}</div><div class="sg-sub">${t.artists?.[0]?.name||''}</div>`;
-      div.onclick=()=>playTrack(t.uri);
-      grid.appendChild(div);
-    });
-  }catch(e){}
-}
-
-async function playTrack(uri){await spFetch('/me/player/play','PUT',{uris:[uri]});setTimeout(pollSpot,600);}
+// Spotify handled by iframe embed
 
 // Canvas
 const cv=document.getElementById('roadCanvas'),ctx=cv.getContext('2d');
@@ -540,9 +374,7 @@ function renderRoad(){
 window.addEventListener('load',()=>{
   resizeCv();window.addEventListener('resize',resizeCv);
   renderRoad();refreshUI();
-  const _sp=new URLSearchParams(window.location.search);
-  if(_sp.get('code')){handleCallback(_sp.get('code'));}
-  else{const t=localStorage.getItem('sp_tok'),e=localStorage.getItem('sp_tok_exp');if(t&&e&&Date.now()<parseInt(e)){S.spotToken=t;initPlayer();}}
+  // Spotify handled by iframe
   if(location.search.includes('demo'))startDemo();
   else if('geolocation' in navigator){
     navigator.geolocation.getCurrentPosition(pos=>{onGPS(pos);navigator.geolocation.watchPosition(onGPS,err=>console.warn('GPS:',err.message),{enableHighAccuracy:true,maximumAge:2000,timeout:15000});},err=>console.warn('GPS denied:',err.message),{enableHighAccuracy:true,timeout:20000});

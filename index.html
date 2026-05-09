@@ -4,101 +4,124 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Tesla Dashboard</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body.light{--bg:#e8e8e8;--cluster:#ebebeb;--text:#1a1a1a;--subtext:#9a9a9a;--divider:rgba(0,0,0,0.08);--btn-bg:rgba(0,0,0,0.05);--btn-border:rgba(0,0,0,0.1);--bottom-bg:#f5f5f5;--bottom-border:rgba(0,0,0,0.08);--icon-color:#555;--range-bg:rgba(0,0,0,0.1)}
-body.dark{--bg:#000;--cluster:#000;--text:#f0f0f0;--subtext:#444;--divider:rgba(255,255,255,0.05);--btn-bg:rgba(255,255,255,0.06);--btn-border:rgba(255,255,255,0.08);--bottom-bg:#000;--bottom-border:rgba(255,255,255,0.05);--icon-color:#888;--range-bg:rgba(255,255,255,0.1)}
-html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',sans-serif;transition:background 0.4s,color 0.4s}
-#shell{display:grid;grid-template-rows:1fr 130px;height:100dvh;width:100vw}
-#main{display:grid;grid-template-columns:420px 1fr;height:calc(100dvh - 130px);min-height:0}
+body.light{--bg:#e8e8e8;--cluster:#ebebeb;--text:#1a1a1a;--subtext:#9a9a9a;--divider:rgba(0,0,0,0.08);--btn-bg:rgba(0,0,0,0.04);--btn-border:rgba(0,0,0,0.12);--card:rgba(0,0,0,0.03);--range-bg:rgba(0,0,0,0.1)}
+body.dark{--bg:#0a0a0a;--cluster:#111;--text:#f0f0f0;--subtext:#555;--divider:rgba(255,255,255,0.06);--btn-bg:rgba(255,255,255,0.06);--btn-border:rgba(255,255,255,0.1);--card:rgba(255,255,255,0.04);--range-bg:rgba(255,255,255,0.1)}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',sans-serif;transition:background 0.4s}
+#shell{width:100vw;height:100dvh;display:grid;grid-template-columns:420px 1fr}
 
-/* CLUSTER */
-#cluster{background:var(--cluster);display:flex;flex-direction:column;position:relative;overflow:hidden;border-right:1px solid var(--divider);transition:background 0.3s}
-.cl-status{display:flex;justify-content:space-between;align-items:center;padding:14px 18px 6px;flex-shrink:0}
-.cl-speed-block{padding:4px 22px 0;flex-shrink:0}
-.cl-speed-num{font-family:'Inter',sans-serif;font-weight:300;font-size:110px;line-height:0.95;letter-spacing:-6px;color:var(--text);transition:color 0.5s;display:block}
-.cl-speed-num.danger{color:#d32f2f}
-.cl-speed-unit{font-size:11px;font-weight:600;letter-spacing:3px;color:var(--text);margin-top:2px;text-transform:uppercase;font-family:'Inter',sans-serif}
-.cl-tripodo-top{width:100%;padding:6px 22px 10px;flex-shrink:0}
-.cl-tripodo-top-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
-.cl-tripodo-top-label{font-size:13px;font-weight:600;letter-spacing:1px;color:var(--text);font-family:'Inter',sans-serif}
-.cl-tripodo-top-val{font-family:'Inter',sans-serif;font-weight:600;font-size:18px;color:var(--text);letter-spacing:0.3px}
-#roadWrap{flex:1;min-height:0;position:relative;overflow:hidden}
-#roadCanvas{position:absolute;inset:0;width:100%;height:100%}
-.cl-act-btn{padding:9px 4px;border-radius:10px;border:1px solid var(--btn-border);background:var(--btn-bg);color:var(--subtext);font-size:12px;font-weight:600;letter-spacing:0.3px;text-transform:none;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
-.cl-act-btn:hover{color:var(--text);border-color:rgba(76,175,80,0.4);background:rgba(76,175,80,0.06)}
-
-/* MAP */
-#mapWrap{position:relative;width:100%;height:100%;overflow:hidden}
-#map{width:100%;height:100%}
-.leaflet-control-zoom{display:none}
-.leaflet-control-attribution{font-size:8px;opacity:0.3}
-.map-search-pill{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(255,255,255,0.97);border-radius:26px;box-shadow:0 2px 14px rgba(0,0,0,0.14);padding:0 16px;height:42px;display:flex;align-items:center;gap:10px;min-width:240px;max-width:360px;width:45%}
-.map-search-pill input{border:none;background:transparent;outline:none;font-size:13px;font-family:'Inter',sans-serif;font-weight:300;color:#111;flex:1}
-.map-search-pill input::placeholder{color:#bbb}
-#searchResults{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:1001;background:#fff;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.13);min-width:240px;max-width:360px;width:45%;max-height:200px;overflow-y:auto;display:none}
-.sr-item{padding:11px 16px;font-size:13px;font-family:'Inter',sans-serif;font-weight:300;color:#111;cursor:pointer;border-bottom:1px solid rgba(0,0,0,0.05)}
-.sr-item:hover{background:#f7f7f7}
-.sr-item:last-child{border-bottom:none}
-.map-zoom-col{position:absolute;right:14px;top:50%;transform:translateY(-50%);z-index:1000;display:flex;flex-direction:column;gap:2px}
-.map-z-btn{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.96);border:none;box-shadow:0 2px 8px rgba(0,0,0,0.12);font-size:20px;color:#333;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:300}
-.map-recenter{position:absolute;right:14px;bottom:14px;z-index:1000;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.96);border:none;box-shadow:0 2px 10px rgba(0,0,0,0.14);display:flex;align-items:center;justify-content:center;cursor:pointer}
-.map-nav-btn{position:absolute;left:14px;bottom:14px;z-index:1000;background:#1a73e8;border:none;border-radius:22px;padding:10px 18px;color:#fff;font-size:12px;font-weight:400;font-family:'Inter',sans-serif;cursor:pointer;box-shadow:0 2px 10px rgba(26,115,232,0.35);display:none;align-items:center;gap:7px}
-
-/* BOTTOM */
-#bottom{background:var(--bottom-bg);border-top:1px solid var(--bottom-border);display:grid;grid-template-columns:420px 1fr;height:130px;z-index:20;position:fixed;bottom:0;left:0;right:0}
-.btm-left{display:flex;align-items:center;gap:6px;padding:0 14px;border-right:1px solid var(--bottom-border)}
-.btm-icon{width:46px;height:46px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:none;background:transparent;color:var(--subtext);transition:all 0.2s;text-decoration:none}
-.btm-icon:hover{color:var(--text);background:var(--btn-bg)}
-.btm-icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.btm-icon-lbl{font-size:9px;letter-spacing:0.3px;text-transform:none;color:inherit;font-weight:600;font-family:'Inter',sans-serif}
-.btm-spotify{display:flex;flex-direction:column;justify-content:center;padding:0 18px;overflow:hidden;flex:1}
-.spot-art{width:52px;height:52px;border-radius:6px;object-fit:cover;background:var(--btn-bg);flex-shrink:0}
-.spot-track{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
-.spot-artist{font-size:12px;font-weight:400;color:var(--subtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.spot-prog-bar{width:100%;height:2px;background:var(--range-bg);border-radius:1px;margin-top:6px}
-.spot-prog-fill{height:100%;border-radius:1px;background:#1db954;transition:width 0.8s linear}
-.mc-btn{width:36px;height:36px;border-radius:50%;border:none;background:transparent;color:var(--subtext);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
-.mc-btn:hover{color:var(--text);background:var(--btn-bg)}
-.mc-btn.play{border:1px solid var(--btn-border);width:40px;height:40px}
-.spot-login-btn{background:#1db954;border:none;border-radius:20px;color:#fff;padding:8px 18px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
+/* ── CLUSTER ── */
+#cluster{background:var(--cluster);display:flex;flex-direction:column;height:100dvh;overflow:hidden;border-right:1px solid var(--divider);transition:background 0.3s;position:relative}
+.cl-top{display:flex;align-items:center;padding:10px 12px 6px;gap:6px;flex-shrink:0}
+.cl-top-time{font-weight:600;font-size:15px;color:var(--text);margin-left:auto}
+.cl-top-temp{font-weight:600;font-size:15px;color:var(--text);margin-right:4px}
+.icon-btn{width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,123,228,0.3);background:rgba(0,123,228,0.06);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
+.icon-btn:hover{background:rgba(0,123,228,0.16);border-color:#007BE4}
+.icon-btn svg{width:14px;height:14px;stroke:#007BE4;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn.demo-active{background:rgba(0,123,228,0.22);border-color:#007BE4}
 .icon-sun{display:block}.icon-moon{display:none}
 body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
+.cl-speed-block{padding:0 16px;flex-shrink:0}
+.cl-speed-num{font-family:'Inter',sans-serif;font-weight:300;font-size:120px;line-height:0.9;letter-spacing:-6px;color:var(--text);transition:color 0.5s;display:block}
+.cl-speed-num.danger{color:#d32f2f}
+.cl-speed-unit{font-size:10px;font-weight:600;letter-spacing:4px;color:var(--text);text-transform:uppercase;margin-top:2px}
+.cl-data{padding:4px 16px 6px;flex-shrink:0}
+.cl-data-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.cl-data-label{font-size:12px;font-weight:600;color:var(--text)}
+.cl-data-val{font-family:'Inter',sans-serif;font-weight:600;font-size:16px;color:var(--text)}
+.cl-divider{width:100%;height:1px;background:var(--divider);flex-shrink:0}
+.cl-steering{display:flex;justify-content:center;padding:5px 0 3px;flex-shrink:0}
+#roadWrap{flex:1;min-height:0;position:relative;overflow:hidden}
+#roadCanvas{position:absolute;inset:0;width:100%;height:100%}
+
+/* ── SPOTIFY PANEL ── */
+#spotPanel{display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:var(--bg)}
+
+/* not logged in */
+#spotLogin{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.spot-connect-btn{background:#1db954;border:none;border-radius:24px;color:#fff;padding:14px 32px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:0.3px}
+.spot-connect-btn:hover{background:#1ed760}
+
+/* now playing header */
+#spotPlayer{display:none;flex-direction:column;height:100dvh}
+.spot-header{display:flex;align-items:center;gap:14px;padding:20px 22px 14px;flex-shrink:0;border-bottom:1px solid var(--divider)}
+.spot-art{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--btn-bg);flex-shrink:0}
+.spot-header-info{flex:1;min-width:0}
+.spot-track{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.spot-artist{font-size:13px;font-weight:400;color:var(--subtext);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spot-prog-wrap{padding:0 22px 0;flex-shrink:0}
+.spot-prog-bar{width:100%;height:3px;background:var(--range-bg);border-radius:2px;margin:12px 0 4px}
+.spot-prog-fill{height:100%;border-radius:2px;background:#1db954;transition:width 0.8s linear}
+.spot-times{display:flex;justify-content:space-between;font-size:10px;color:var(--subtext);font-family:'Inter',sans-serif}
+
+/* main controls */
+.spot-controls{display:flex;align-items:center;justify-content:center;gap:24px;padding:14px 22px;flex-shrink:0}
+.sp-btn{background:none;border:none;cursor:pointer;color:var(--subtext);display:flex;align-items:center;justify-content:center;transition:color 0.2s}
+.sp-btn:hover{color:var(--text)}
+.sp-btn.play{width:56px;height:56px;border-radius:50%;border:2px solid var(--text);color:var(--text)}
+.sp-btn.play:hover{background:var(--btn-bg)}
+
+/* search */
+.spot-search-wrap{padding:0 22px 10px;flex-shrink:0}
+.spot-search-inner{display:flex;align-items:center;gap:10px;background:var(--btn-bg);border:1px solid var(--btn-border);border-radius:22px;padding:0 14px;height:38px}
+.spot-search-inner input{border:none;background:transparent;outline:none;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);flex:1}
+.spot-search-inner input::placeholder{color:var(--subtext)}
+.spot-search-inner svg{stroke:var(--subtext);flex-shrink:0}
+
+/* tabs */
+.spot-tabs{display:flex;padding:0 22px;gap:0;border-bottom:1px solid var(--divider);flex-shrink:0}
+.spot-tab{padding:10px 18px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;color:var(--subtext);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s}
+.spot-tab.active{color:var(--text);border-bottom-color:var(--text)}
+
+/* grid */
+.spot-grid-wrap{flex:1;overflow-y:auto;padding:16px 22px;scrollbar-width:none}
+.spot-grid-wrap::-webkit-scrollbar{display:none}
+.spot-section-title{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--subtext);margin-bottom:12px}
+.spot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:12px;margin-bottom:24px}
+.spot-grid-item{cursor:pointer;text-align:center}
+.spot-grid-item img{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;background:var(--btn-bg)}
+.spot-grid-item .sg-name{font-size:11px;font-weight:600;color:var(--text);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spot-grid-item .sg-sub{font-size:10px;color:var(--subtext);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:3000;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal-box{background:var(--cluster);border:1px solid var(--divider);border-radius:20px;padding:28px;min-width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
-.modal-title{font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--subtext);margin-bottom:18px}
-.modal-input{width:100%;padding:14px;border-radius:10px;border:1px solid var(--btn-border);background:var(--btn-bg);color:var(--text);font-size:22px;font-family:'Inter',sans-serif;font-weight:200;text-align:center;outline:none;margin-bottom:16px;transition:border-color 0.2s}
+.modal-box{background:var(--cluster);border:1px solid var(--divider);border-radius:20px;padding:26px;min-width:280px}
+.modal-title{font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--subtext);margin-bottom:16px}
+.modal-input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--btn-border);background:var(--btn-bg);color:var(--text);font-size:22px;font-family:'Inter',sans-serif;font-weight:200;text-align:center;outline:none;margin-bottom:14px}
 .modal-input:focus{border-color:#4caf50}
 .modal-btns{display:flex;gap:8px}
-.modal-btn{flex:1;padding:11px;border-radius:10px;border:1px solid var(--btn-border);background:transparent;color:var(--subtext);cursor:pointer;font-size:10px;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s;font-family:'Inter',sans-serif;font-weight:500}
-.modal-btn:hover{color:var(--text)}
+.modal-btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--btn-border);background:transparent;color:var(--subtext);cursor:pointer;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'Inter',sans-serif;font-weight:500}
 .modal-btn.ok{background:#4caf50;border-color:#4caf50;color:#fff}
-.modal-btn.ok:hover{background:#43a047}
 </style>
 </head>
 <body class="light">
 <div id="shell">
-<div id="main">
 
-<!-- CLUSTER -->
+<!-- ════ CLUSTER ════ -->
 <div id="cluster">
-  <div class="cl-status">
-    <span style="font-family:'Inter',sans-serif;font-weight:600;font-size:18px;color:var(--text);" id="clTemp">-- °C</span>
-    <div style="display:flex;align-items:center;gap:10px;height:18px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M12 19a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" fill="#1a73e8"/><path d="M5.636 15.364a9 9 0 0 1 12.728 0" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><path d="M1.808 11.536a15 15 0 0 1 20.384 0" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" opacity="0.45"/></svg>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M12 3l7 5-7 5 7 5-7 5V13l-4 3 4-4-4-4 4 3V3z" stroke="#5c6bc0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <div style="display:flex;align-items:center;gap:3px;height:18px;">
-        <div style="position:relative;width:28px;height:14px;border:1.8px solid var(--text);border-radius:3px;flex-shrink:0;">
-          <div id="batFill" style="position:absolute;left:1px;top:1px;bottom:1px;width:80%;border-radius:1.5px;background:#4caf50;transition:width 0.5s,background 0.5s;"></div>
-          <div style="position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:3px;height:6px;background:var(--text);border-radius:0 1.5px 1.5px 0;"></div>
-        </div>
-        <span id="batPct" style="font-family:'Inter',sans-serif;font-size:11px;font-weight:600;color:var(--text);line-height:18px;">--%</span>
-      </div>
-    </div>
-    <span style="font-family:'Inter',sans-serif;font-weight:600;font-size:18px;color:var(--text);" id="clTime">--:--</span>
+  <div class="cl-top">
+    <span class="cl-top-temp" id="clTemp">-- °C</span>
+    <!-- icon buttons: ODO, Reset, Theme, FS, Demo -->
+    <button class="icon-btn" onclick="openModal('odo')" title="Set ODO">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+    </button>
+    <button class="icon-btn" onclick="resetTrip()" title="Reset Trip">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+    <button class="icon-btn theme-btn" onclick="toggleTheme()" title="Theme">
+      <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="icon-btn" onclick="toggleFS()" title="Fullscreen">
+      <svg id="fsIco" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+    </button>
+    <button class="icon-btn" id="demoBtn" onclick="toggleDemo()" title="Demo">
+      <svg viewBox="0 0 24 24" fill="#007BE4" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    </button>
+    <span class="cl-top-time" id="clTime">--:--</span>
   </div>
 
   <div class="cl-speed-block">
@@ -106,93 +129,101 @@ body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
     <div class="cl-speed-unit">MPH</div>
   </div>
 
-  <div class="cl-tripodo-top">
-    <div class="cl-tripodo-top-row">
-      <span class="cl-tripodo-top-label">Trip</span>
-      <span class="cl-tripodo-top-val" id="tripVal">0.0 mi</span>
+  <div class="cl-data">
+    <div class="cl-data-row">
+      <span class="cl-data-label">Trip</span>
+      <span class="cl-data-val" id="tripVal">0.0 mi</span>
     </div>
-    <div class="cl-tripodo-top-row">
-      <span class="cl-tripodo-top-label">ODO</span>
-      <span class="cl-tripodo-top-val" id="odoVal">-- mi</span>
+    <div class="cl-data-row">
+      <span class="cl-data-label">ODO</span>
+      <span class="cl-data-val" id="odoVal">-- mi</span>
     </div>
   </div>
 
-  <div style="width:100%;height:1px;background:var(--divider);flex-shrink:0;"></div>
-  <div style="display:flex;justify-content:center;align-items:center;padding:10px 0 6px;flex-shrink:0;">
-    <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M46 24C46 36.1501 36.1501 46 24 46C11.8499 46 2 36.1501 2 24C2 11.8499 11.8499 2 24 2C36.1501 2 46 11.8499 46 24ZM6.24927 27.0017C15.9578 27.1345 20.4526 35.0271 20.9526 41.7432C13.438 40.4619 7.51172 34.5227 6.24927 27.0017ZM6.10986 22H10.5C12.2219 22 13.666 21.4441 15.3108 20.8108C17.4866 19.9729 20.0134 19 24 19C27.9866 19 30.5134 19.9729 32.6892 20.8108C34.334 21.4441 35.7781 22 37.5 22H41.8901C40.8953 13 33.2651 6 24 6C14.7349 6 7.10474 13 6.10986 22ZM27.0474 41.7432C27.5474 35.0271 32.0422 27.1345 41.7507 27.0017C40.4883 34.5227 34.562 40.4619 27.0474 41.7432Z" fill="#007BE4"/>
-</svg>
+  <div class="cl-divider"></div>
+  <div class="cl-steering">
+    <svg width="30" height="30" viewBox="0 0 48 48" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M46 24C46 36.1501 36.1501 46 24 46C11.8499 46 2 36.1501 2 24C2 11.8499 11.8499 2 24 2C36.1501 2 46 11.8499 46 24ZM6.24927 27.0017C15.9578 27.1345 20.4526 35.0271 20.9526 41.7432C13.438 40.4619 7.51172 34.5227 6.24927 27.0017ZM6.10986 22H10.5C12.2219 22 13.666 21.4441 15.3108 20.8108C17.4866 19.9729 20.0134 19 24 19C27.9866 19 30.5134 19.9729 32.6892 20.8108C34.334 21.4441 35.7781 22 37.5 22H41.8901C40.8953 13 33.2651 6 24 6C14.7349 6 7.10474 13 6.10986 22ZM27.0474 41.7432C27.5474 35.0271 32.0422 27.1345 41.7507 27.0017C40.4883 34.5227 34.562 40.4619 27.0474 41.7432Z" fill="#007BE4"/></svg>
   </div>
 
   <div id="roadWrap"><canvas id="roadCanvas"></canvas></div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px 12px;flex-shrink:0;">
-    <button class="cl-act-btn" onclick="openModal('odo')">Set ODO</button>
-    <button class="cl-act-btn" onclick="resetTrip()">Reset Trip</button>
-  </div>
 </div>
 
-<!-- MAP -->
-<div id="mapWrap">
-  <div class="map-search-pill">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input type="text" id="mapSearch" placeholder="Search places…" autocomplete="off" onkeydown="if(event.key==='Enter')doSearch()">
-    <button onclick="doSearch()" style="background:none;border:none;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
-  </div>
-  <div id="searchResults"></div>
-  <div id="map"></div>
-  <div class="map-zoom-col">
-    <button class="map-z-btn" onclick="map.zoomIn()">+</button>
-    <button class="map-z-btn" onclick="map.zoomOut()">−</button>
-  </div>
-  <button class="map-recenter" onclick="recenterMap()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-  </button>
-  <button class="map-nav-btn" id="navBtn" onclick="startNav()">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-    Navigate
-  </button>
-</div>
-</div><!-- /main -->
+<!-- ════ SPOTIFY PANEL ════ -->
+<div id="spotPanel">
 
-<!-- BOTTOM -->
-<div id="bottom">
-  <div class="btm-left">
-    <button class="btm-icon theme-btn" onclick="toggleTheme()">
-      <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      <span class="btm-icon-lbl">Theme</span>
-    </button>
-    <button class="btm-icon" onclick="toggleFS()">
-      <svg id="fsIco" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-      <span class="btm-icon-lbl">FS</span>
-    </button>
-    <button class="btm-icon" id="demoBtn" onclick="toggleDemo()">
-      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>
-      <span class="btm-icon-lbl">Demo</span>
-    </button>
-  </div>
-
-  <!-- Spotify -->
-  <div style="display:flex;align-items:center;padding:0 16px;gap:14px;overflow:hidden;border-left:1px solid var(--bottom-border);">
-    <div id="spotLoginWrap" style="display:flex;align-items:center;">
-      <button class="spot-login-btn" onclick="spotifyLogin()">Connect Spotify</button>
+  <!-- Not logged in -->
+  <div id="spotLogin">
+    <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="#1db954" stroke-width="1.5"/>
+      <path d="M8 12.5c2.5-1.5 6-1.5 8 0" stroke="#1db954" stroke-width="2" stroke-linecap="round"/>
+      <path d="M7 9.5c3.5-2 8-2 10 0" stroke="#1db954" stroke-width="2" stroke-linecap="round"/>
+      <path d="M9 15.5c2-1 5-1 6.5 0" stroke="#1db954" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <div style="text-align:center">
+      <div style="font-size:20px;font-weight:600;color:var(--text);margin-bottom:6px">Connect Spotify</div>
+      <div style="font-size:13px;color:var(--subtext)">Stream music while you drive</div>
     </div>
-    <div id="spotPlayerWrap" style="display:none;width:100%;align-items:center;gap:14px;overflow:hidden;">
+    <button class="spot-connect-btn" onclick="spotifyLogin()">Connect</button>
+  </div>
+
+  <!-- Player (shown after login) -->
+  <div id="spotPlayer">
+
+    <!-- Now playing header -->
+    <div class="spot-header">
       <img id="spotArt" class="spot-art" src="" alt="">
-      <div style="flex:1;min-width:0;overflow:hidden;">
-        <div class="spot-track" id="spotTrack">--</div>
+      <div class="spot-header-info">
+        <div class="spot-track" id="spotTrack">Nothing playing</div>
         <div class="spot-artist" id="spotArtist">--</div>
-        <div class="spot-prog-bar"><div class="spot-prog-fill" id="spotProgFill" style="width:0%"></div></div>
       </div>
-      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
-        <button class="mc-btn" onclick="spotPrev()"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
-        <button class="mc-btn play" onclick="spotToggle()"><svg id="spotPlayIco" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg></button>
-        <button class="mc-btn" onclick="spotNext()"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg></button>
+      <svg onclick="spotLike()" style="cursor:pointer;flex-shrink:0;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--subtext)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    </div>
+
+    <!-- Progress -->
+    <div class="spot-prog-wrap">
+      <div class="spot-prog-bar"><div class="spot-prog-fill" id="spotProgFill" style="width:0%"></div></div>
+      <div class="spot-times">
+        <span id="spotPosTime">0:00</span>
+        <span id="spotDurTime">0:00</span>
       </div>
     </div>
-  </div>
-</div>
+
+    <!-- Controls -->
+    <div class="spot-controls">
+      <button class="sp-btn" onclick="spotPrev()">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+      </button>
+      <button class="sp-btn play" onclick="spotToggle()">
+        <svg id="spotPlayIco" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="sp-btn" onclick="spotNext()">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg>
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div class="spot-search-wrap">
+      <div class="spot-search-inner">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="spotSearchInp" type="text" placeholder="Songs, artists, albums…" onkeydown="if(event.key==='Enter')doSpotSearch()">
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="spot-tabs">
+      <div class="spot-tab active" onclick="setTab(this)">Streaming</div>
+      <div class="spot-tab" onclick="setTab(this)">Radio</div>
+      <div class="spot-tab" onclick="setTab(this)">USB</div>
+    </div>
+
+    <!-- Grid results -->
+    <div class="spot-grid-wrap" id="spotGridWrap">
+      <div class="spot-section-title">Recent</div>
+      <div class="spot-grid" id="spotGrid"></div>
+    </div>
+
+  </div><!-- /spotPlayer -->
+</div><!-- /spotPanel -->
 </div><!-- /shell -->
 
 <!-- MODALS -->
@@ -206,307 +237,98 @@ body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
     </div>
   </div>
 </div>
-<div class="modal-overlay" id="fuelModal">
-  <div class="modal-box">
-    <div class="modal-title">Refuel — Litres Added</div>
-    <input class="modal-input" type="number" id="fuelInp" placeholder="Max 40L" min="1" max="40" value="40">
-    <div class="modal-btns">
-      <button class="modal-btn" onclick="closeModal('fuel')">Cancel</button>
-      <button class="modal-btn ok" onclick="confirmFuel()">Confirm</button>
-    </div>
-  </div>
-</div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ── Constants ──
-const MI_PER_LITRE=10,TANK_L=40,MAX_RANGE=400;
 const SPOT_CLIENT='9ccf3c3270234334b3c74317f5ebd466';
 const SPOT_REDIRECT='https://venureddyy.github.io/run/';
-const SPOT_SCOPES='streaming user-read-playback-state user-modify-playback-state user-read-currently-playing';
+const SPOT_SCOPES='streaming user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read user-top-read';
+const S={targetSpd:0,prevSpd:0,dispSpd:0,trip:0,odo:null,lat:null,lon:null,lastLat:null,lastLon:null,tempFetched:false,spotToken:null,spotPlaying:false,spotDur:0,spotPos:0};
 
-// ── State ──
-const S={
-  targetSpd:0,prevSpd:0,dispSpd:0,
-  trip:0,odo:null,rangeMi:MAX_RANGE,
-  lat:null,lon:null,lastLat:null,lastLon:null,
-  heading:null,userCentered:true,
-  tempFetched:false,
-  spotToken:null,spotPlaying:false,spotDur:0,spotPos:0,
-};
-
-// ── Clock ──
-function tickClock(){
-  const n=new Date();
-  document.getElementById('clTime').textContent=
-    String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-}
+// Clock
+function tickClock(){const n=new Date();document.getElementById('clTime').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
 tickClock();setInterval(tickClock,10000);
 
-// ── Temperature ──
-async function fetchTemp(lat,lon){
-  try{
-    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-    const d=await r.json();
-    document.getElementById('clTemp').textContent=Math.round(d.current_weather.temperature)+' °C';
-  }catch(e){}
-}
+// Temp
+async function fetchTemp(lat,lon){try{const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);const d=await r.json();document.getElementById('clTemp').textContent=Math.round(d.current_weather.temperature)+' °C';}catch(e){}}
 
-// ── Battery ──
-async function initBattery(){
-  if(!('getBattery' in navigator))return;
-  try{
-    const bat=await navigator.getBattery();
-    function upd(){
-      const pct=Math.round(bat.level*100);
-      const fill=document.getElementById('batFill');
-      const lbl=document.getElementById('batPct');
-      if(fill){fill.style.width=pct+'%';fill.style.background=bat.charging?'#1a73e8':pct>20?'#4caf50':'#e53935';}
-      if(lbl)lbl.textContent=pct+'%';
-    }
-    upd();bat.addEventListener('levelchange',upd);bat.addEventListener('chargingchange',upd);
-  }catch(e){}
-}
+// Hav
+function hav(la1,lo1,la2,lo2){const R=3958.8,r=d=>d*Math.PI/180;const a=Math.sin(r(la2-la1)/2)**2+Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(r(lo2-lo1)/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
 
-// ── Haversine ──
-function hav(la1,lo1,la2,lo2){
-  const R=3958.8,r=d=>d*Math.PI/180;
-  const a=Math.sin(r(la2-la1)/2)**2+Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(r(lo2-lo1)/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
+// Speed
+function showSpd(spd){const el=document.getElementById('spdNum');if(el){el.textContent=spd;el.classList.toggle('danger',spd>70);}}
 
-// ── Speed display ──
-function showSpd(spd){
-  const el=document.getElementById('spdNum');
-  if(el){el.textContent=spd;el.classList.toggle('danger',spd>70);}
-}
-
-// ── GPS — THE SPEED FIX ──
+// GPS
 let _lastGPSTime=null;
 function onGPS(pos){
-  const{latitude:lat,longitude:lon,speed}=pos.coords;
-  const now=Date.now();
-
-  // Calculate speed — use native GPS speed if available, else derive from position delta
+  const{latitude:lat,longitude:lon,speed}=pos.coords;const now=Date.now();
   let mph=0;
-  if(speed!=null&&speed>=0){
-    mph=speed*2.23694; // m/s to mph
-  } else if(S.lastLat!==null&&_lastGPSTime!==null){
-    const dt=(now-_lastGPSTime)/3600000; // convert ms to hours
-    if(dt>0&&dt<0.02){ // only use if last fix was <72s ago
-      const d=hav(S.lastLat,S.lastLon,lat,lon);
-      mph=d/dt;
-    }
-  }
+  if(speed!=null&&speed>=0)mph=speed*2.23694;
+  else if(S.lastLat!==null&&_lastGPSTime!==null){const dt=(now-_lastGPSTime)/3600000;if(dt>0&&dt<0.02)mph=hav(S.lastLat,S.lastLon,lat,lon)/dt;}
   _lastGPSTime=now;
-
-  S.prevSpd=S.targetSpd;
-  S.targetSpd=Math.max(0,Math.round(mph));
-  showSpd(S.targetSpd);
-  S.dispSpd=S.targetSpd;
-
+  S.prevSpd=S.targetSpd;S.targetSpd=Math.max(0,Math.round(mph));S.dispSpd=S.targetSpd;showSpd(S.targetSpd);
   S.lat=lat;S.lon=lon;
-  if(S.coords?.heading!=null)S.heading=pos.coords.heading;
   if(!S.tempFetched){fetchTemp(lat,lon);S.tempFetched=true;}
-
-  if(S.lastLat!==null){
-    const d=hav(S.lastLat,S.lastLon,lat,lon);
-    if(d>=0&&d<0.5){
-      S.trip+=d;
-      S.rangeMi=Math.max(0,S.rangeMi-d);
-      if(S.odo!==null)S.odo+=d;
-    }
-  }
-  S.lastLat=lat;S.lastLon=lon;
-  refreshUI();
-
-  if(S.userCentered&&userMarker){
-    userMarker.setLatLng([lat,lon]);
-    updateDriverView(lat,lon);
-  }
+  if(S.lastLat!==null){const d=hav(S.lastLat,S.lastLon,lat,lon);if(d>=0&&d<0.5){S.trip+=d;if(S.odo!==null)S.odo+=d;}}
+  S.lastLat=lat;S.lastLon=lon;refreshUI();
 }
+function refreshUI(){const tv=document.getElementById('tripVal');if(tv)tv.textContent=S.trip.toFixed(1)+' mi';const ov=document.getElementById('odoVal');if(S.odo!==null&&ov)ov.textContent=Math.round(S.odo)+' mi';}
 
-function refreshUI(){
-  const tv=document.getElementById('tripVal');if(tv)tv.textContent=S.trip.toFixed(1)+' mi';
-  const ov=document.getElementById('odoVal');if(S.odo!==null&&ov)ov.textContent=Math.round(S.odo)+' mi';
-}
-
-// ── Demo mode ──
+// Demo
 let demoI=null,demoP=0,demoOn=false;
 function startDemo(){
-  if(demoI)return;
-  demoOn=true;
-  S.lat=51.5074;S.lon=-0.1278;S.lastLat=S.lat;S.lastLon=S.lon;
-  fetchTemp(S.lat,S.lon);
-  initUserMarker(S.lat,S.lon);
-  const btn=document.getElementById('demoBtn');
-  if(btn)btn.style.color='#4caf50';
-  demoI=setInterval(()=>{
-    demoP+=0.04;
-    S.prevSpd=S.targetSpd;
-    S.targetSpd=Math.max(0,Math.round(45+30*Math.sin(demoP)));
-    S.dispSpd=S.targetSpd;
-    showSpd(S.targetSpd);
-    const d=S.targetSpd/3600/60;
-    S.trip+=d;S.rangeMi=Math.max(0,S.rangeMi-d);
-    if(S.odo!==null)S.odo+=d;
-    S.lat+=0.00005;S.lon+=0.00003;
-    if(userMarker)userMarker.setLatLng([S.lat,S.lon]);
-    if(S.userCentered)updateDriverView(S.lat,S.lon);
-    refreshUI();
-  },1000);
+  if(demoI)return;demoOn=true;S.lat=51.5074;S.lon=-0.1278;S.lastLat=S.lat;S.lastLon=S.lon;
+  fetchTemp(S.lat,S.lon);document.getElementById('demoBtn').classList.add('demo-active');
+  demoI=setInterval(()=>{demoP+=0.04;S.prevSpd=S.targetSpd;S.targetSpd=Math.max(0,Math.round(45+30*Math.sin(demoP)));S.dispSpd=S.targetSpd;showSpd(S.targetSpd);const d=S.targetSpd/3600/60;S.trip+=d;if(S.odo!==null)S.odo+=d;refreshUI();},1000);
 }
-function stopDemo(){
-  if(demoI){clearInterval(demoI);demoI=null;}
-  demoOn=false;S.targetSpd=0;S.dispSpd=0;showSpd(0);
-  const btn=document.getElementById('demoBtn');if(btn)btn.style.color='';
-}
+function stopDemo(){if(demoI){clearInterval(demoI);demoI=null;}demoOn=false;S.targetSpd=0;S.dispSpd=0;showSpd(0);document.getElementById('demoBtn').classList.remove('demo-active');}
 function toggleDemo(){if(demoOn)stopDemo();else startDemo();}
 
-// ── Reset ──
+// Modals
 function openModal(t){document.getElementById(t+'Modal').classList.add('open');}
 function closeModal(t){document.getElementById(t+'Modal').classList.remove('open');}
-function confirmOdo(){
-  const v=parseFloat(document.getElementById('odoInp').value);
-  if(!isNaN(v)&&v>=0){S.odo=v;refreshUI();}closeModal('odo');
-}
-function confirmFuel(){
-  const v=parseFloat(document.getElementById('fuelInp').value);
-  if(!isNaN(v)&&v>0){S.rangeMi=Math.min(v,TANK_L)*MI_PER_LITRE;}closeModal('fuel');
-}
+function confirmOdo(){const v=parseFloat(document.getElementById('odoInp').value);if(!isNaN(v)&&v>=0){S.odo=v;refreshUI();}closeModal('odo');}
 function resetTrip(){S.trip=0;refreshUI();}
 
-// ── MAP ──
-const map=L.map('map',{zoomControl:false,attributionControl:true}).setView([51.5074,-0.1278],15);
-// Theme-aware tile layers
-const lightTiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OSM'});
-const darkTiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OSM © CARTO'});
-let currentTiles=lightTiles;
-lightTiles.addTo(map);
-
-function updateMapTheme(){
-  const dark=document.body.classList.contains('dark');
-  if(dark&&currentTiles===lightTiles){map.removeLayer(lightTiles);darkTiles.addTo(map);currentTiles=darkTiles;}
-  else if(!dark&&currentTiles===darkTiles){map.removeLayer(darkTiles);lightTiles.addTo(map);currentTiles=lightTiles;}
-}
-map.on('dragstart',()=>S.userCentered=false);
-
-const userIcon=L.divIcon({
-  html:`<div style="width:28px;height:28px;transform-origin:center;"><svg viewBox="0 0 24 24" width="28" height="28"><polygon points="12,2 20,20 12,15 4,20" fill="#1a73e8" stroke="#fff" stroke-width="1"/></svg></div>`,
-  className:'',iconSize:[28,28],iconAnchor:[14,14]
-});
-let userMarker=null,searchMark=null,routeLine=null,selectedDest=null;
-
-function initUserMarker(lat,lon){
-  if(!userMarker){userMarker=L.marker([lat,lon],{icon:userIcon}).addTo(map);}
-  map.setView([lat,lon],15);
-}
-function updateDriverView(lat,lon){
-  const offset=0.0006;
-  map.setView([lat+offset,lon],17,{animate:true,duration:0.5});
-  if(userMarker)userMarker.setLatLng([lat,lon]);
-}
-function recenterMap(){S.userCentered=true;if(S.lat)updateDriverView(S.lat,S.lon);}
-
-async function doSearch(){
-  const q=document.getElementById('mapSearch').value.trim();if(!q)return;
-  try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`);
-    const data=await r.json();
-    const box=document.getElementById('searchResults');box.innerHTML='';
-    if(!data.length){box.innerHTML='<div class="sr-item">No results</div>';}
-    else data.forEach(it=>{
-      const d=document.createElement('div');d.className='sr-item';d.textContent=it.display_name;
-      d.onclick=()=>pickResult(it);box.appendChild(d);
-    });
-    box.style.display='block';
-  }catch(e){}
-}
-function pickResult(it){
-  const lat=parseFloat(it.lat),lon=parseFloat(it.lon);
-  selectedDest={lat,lon};
-  if(searchMark)map.removeLayer(searchMark);
-  searchMark=L.marker([lat,lon]).addTo(map).bindPopup(it.display_name.split(',')[0]).openPopup();
-  map.setView([lat,lon],15);
-  document.getElementById('searchResults').style.display='none';
-  document.getElementById('mapSearch').value=it.display_name.split(',')[0];
-  document.getElementById('navBtn').style.display='flex';
-  S.userCentered=false;
-}
-document.addEventListener('click',e=>{
-  if(!e.target.closest('.map-search-pill')&&!e.target.closest('#searchResults'))
-    document.getElementById('searchResults').style.display='none';
-});
-async function startNav(){
-  if(!selectedDest||!S.lat)return;
-  if(routeLine)map.removeLayer(routeLine);
-  try{
-    const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${S.lon},${S.lat};${selectedDest.lon},${selectedDest.lat}?geometries=geojson`);
-    const data=await r.json();
-    if(data.routes?.[0]){
-      routeLine=L.geoJSON(data.routes[0].geometry,{style:{color:'#1a73e8',weight:5,opacity:0.85}}).addTo(map);
-      map.fitBounds(routeLine.getBounds(),{padding:[50,50]});
-    }
-  }catch(e){alert('Route unavailable.');}
-}
-
-// ── Theme + FS ──
-function toggleTheme(){const d=document.body.classList.toggle('dark');document.body.classList.toggle('light',!d);updateMapTheme();}
+// Theme + FS
+function toggleTheme(){document.body.classList.toggle('dark');document.body.classList.toggle('light',!document.body.classList.contains('dark'));}
 let fsOn=false;
-function toggleFS(){
-  if(!fsOn)(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);
-  else(document.exitFullscreen||document.webkitExitFullscreen).call(document);
-  fsOn=!fsOn;
-}
+function toggleFS(){if(!fsOn)(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);else(document.exitFullscreen||document.webkitExitFullscreen).call(document);fsOn=!fsOn;}
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)fsOn=false;});
 
-// ── Spotify PKCE ──
-async function generateChallenge(verifier){
-  const enc=new TextEncoder().encode(verifier);
-  const hash=await crypto.subtle.digest('SHA-256',enc);
-  return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function rndStr(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');}
+// Spotify PKCE
+async function sha256(v){const e=new TextEncoder().encode(v);const h=await crypto.subtle.digest('SHA-256',e);return btoa(String.fromCharCode(...new Uint8Array(h))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function rnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');}
 
 async function spotifyLogin(){
-  const stored=localStorage.getItem('sp_tok'),exp=localStorage.getItem('sp_tok_exp');
-  if(stored&&exp&&Date.now()<parseInt(exp)){S.spotToken=stored;initPlayer();return;}
-  const verifier=rndStr(32);
-  const challenge=await generateChallenge(verifier);
-  localStorage.setItem('sp_verifier',verifier);
-  const url=new URL('https://accounts.spotify.com/authorize');
-  url.searchParams.set('client_id',SPOT_CLIENT);
-  url.searchParams.set('response_type','code');
-  url.searchParams.set('redirect_uri',SPOT_REDIRECT);
-  url.searchParams.set('scope',SPOT_SCOPES);
-  url.searchParams.set('code_challenge_method','S256');
-  url.searchParams.set('code_challenge',challenge);
-  location.href=url.toString();
+  const t=localStorage.getItem('sp_tok'),e=localStorage.getItem('sp_tok_exp');
+  if(t&&e&&Date.now()<parseInt(e)){S.spotToken=t;initPlayer();return;}
+  const v=rnd(32),c=await sha256(v);
+  localStorage.setItem('sp_verifier',v);
+  const u=new URL('https://accounts.spotify.com/authorize');
+  u.searchParams.set('client_id',SPOT_CLIENT);u.searchParams.set('response_type','code');
+  u.searchParams.set('redirect_uri',SPOT_REDIRECT);u.searchParams.set('scope',SPOT_SCOPES);
+  u.searchParams.set('code_challenge_method','S256');u.searchParams.set('code_challenge',c);
+  location.href=u.toString();
 }
-async function handleSpotifyCallback(code){
-  const verifier=localStorage.getItem('sp_verifier');if(!verifier)return;
+async function handleCallback(code){
+  const v=localStorage.getItem('sp_verifier');if(!v)return;
   try{
-    const r=await fetch('https://accounts.spotify.com/api/token',{
-      method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:SPOT_REDIRECT,client_id:SPOT_CLIENT,code_verifier:verifier})
-    });
+    const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:SPOT_REDIRECT,client_id:SPOT_CLIENT,code_verifier:v})});
     const d=await r.json();
-    if(d.access_token){
-      localStorage.setItem('sp_tok',d.access_token);
-      localStorage.setItem('sp_tok_exp',Date.now()+d.expires_in*1000);
-      if(d.refresh_token)localStorage.setItem('sp_refresh',d.refresh_token);
-      localStorage.removeItem('sp_verifier');
-      history.replaceState({},document.title,location.pathname);
-      S.spotToken=d.access_token;initPlayer();
-    }
-  }catch(e){console.error('Spotify token error',e);}
+    if(d.access_token){localStorage.setItem('sp_tok',d.access_token);localStorage.setItem('sp_tok_exp',Date.now()+d.expires_in*1000);if(d.refresh_token)localStorage.setItem('sp_refresh',d.refresh_token);localStorage.removeItem('sp_verifier');history.replaceState({},document.title,location.pathname);S.spotToken=d.access_token;initPlayer();}
+  }catch(e){console.error(e);}
 }
+
 function initPlayer(){
-  document.getElementById('spotLoginWrap').style.display='none';
-  document.getElementById('spotPlayerWrap').style.display='flex';
-  pollSpot();setInterval(pollSpot,3000);
+  document.getElementById('spotLogin').style.display='none';
+  document.getElementById('spotPlayer').style.display='flex';
+  document.getElementById('spotPlayer').style.flexDirection='column';
+  document.getElementById('spotPlayer').style.height='100%';
+  pollSpot();loadRecentTracks();
+  setInterval(pollSpot,3000);
   setInterval(()=>{if(S.spotPlaying&&S.spotDur>0){S.spotPos=Math.min(S.spotPos+1000,S.spotDur);updateProg();}},1000);
 }
+
 async function spFetch(ep,method='GET',body=null){
   const opts={method,headers:{'Authorization':'Bearer '+S.spotToken,'Content-Type':'application/json'}};
   if(body)opts.body=JSON.stringify(body);
@@ -514,7 +336,9 @@ async function spFetch(ep,method='GET',body=null){
   if(r.status===204||r.status===202)return null;if(!r.ok)return null;
   try{return await r.json();}catch{return null;}
 }
-function fmtMs(ms){const s=Math.floor(ms/1000),m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
+
+function fmtMs(ms){if(!ms)return'0:00';const s=Math.floor(ms/1000),m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
+
 async function pollSpot(){
   const d=await spFetch('/me/player');if(!d)return;
   S.spotPlaying=d.is_playing;S.spotDur=d.item?.duration_ms||0;S.spotPos=d.progress_ms||0;
@@ -527,22 +351,57 @@ async function pollSpot(){
   updateProg();
   document.getElementById('spotPlayIco').innerHTML=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';
 }
+
 function updateProg(){
   const pct=S.spotDur>0?S.spotPos/S.spotDur*100:0;
   const f=document.getElementById('spotProgFill');if(f)f.style.width=pct+'%';
+  document.getElementById('spotPosTime').textContent=fmtMs(S.spotPos);
+  document.getElementById('spotDurTime').textContent=fmtMs(S.spotDur);
 }
+
 async function spotToggle(){await spFetch(S.spotPlaying?'/me/player/pause':'/me/player/play','PUT');S.spotPlaying=!S.spotPlaying;document.getElementById('spotPlayIco').innerHTML=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';}
 async function spotNext(){await spFetch('/me/player/next','POST');setTimeout(pollSpot,600);}
 async function spotPrev(){await spFetch('/me/player/previous','POST');setTimeout(pollSpot,600);}
+function spotLike(){}
 
-// ── Canvas ──
-const cv=document.getElementById('roadCanvas');
-const ctx=cv.getContext('2d');
-let laneOff=0,fogR=30,fogG=200,fogB=80,fogA=0,glideT=0;
-let nightImg=null;
-function getNightImg(){
-  if(nightImg)return nightImg;
-  const blob=new Blob([`<svg width="339" height="245" viewBox="0 0 339 245" fill="none" xmlns="http://www.w3.org/2000/svg">
+function setTab(el){document.querySelectorAll('.spot-tab').forEach(t=>{t.classList.remove('active');});el.classList.add('active');}
+
+async function loadRecentTracks(){
+  if(!S.spotToken)return;
+  try{
+    const d=await spFetch('/me/top/tracks?limit=20&time_range=short_term');
+    const grid=document.getElementById('spotGrid');grid.innerHTML='';
+    const title=grid.previousElementSibling;if(title)title.textContent='Top Tracks';
+    (d?.items||[]).forEach(t=>{
+      const div=document.createElement('div');div.className='spot-grid-item';
+      div.innerHTML=`<img src="${t.album?.images?.[0]?.url||''}" alt=""><div class="sg-name">${t.name}</div><div class="sg-sub">${t.artists?.[0]?.name||''}</div>`;
+      div.onclick=()=>playTrack(t.uri);
+      grid.appendChild(div);
+    });
+  }catch(e){}
+}
+
+async function doSpotSearch(){
+  const q=document.getElementById('spotSearchInp').value.trim();if(!q)return;
+  try{
+    const d=await spFetch(`/search?q=${encodeURIComponent(q)}&type=track&limit=20`);
+    const grid=document.getElementById('spotGrid');grid.innerHTML='';
+    const title=grid.previousElementSibling;if(title)title.textContent='Results';
+    (d?.tracks?.items||[]).forEach(t=>{
+      const div=document.createElement('div');div.className='spot-grid-item';
+      div.innerHTML=`<img src="${t.album?.images?.[0]?.url||''}" alt=""><div class="sg-name">${t.name}</div><div class="sg-sub">${t.artists?.[0]?.name||''}</div>`;
+      div.onclick=()=>playTrack(t.uri);
+      grid.appendChild(div);
+    });
+  }catch(e){}
+}
+
+async function playTrack(uri){await spFetch('/me/player/play','PUT',{uris:[uri]});setTimeout(pollSpot,600);}
+
+// Canvas
+const cv=document.getElementById('roadCanvas'),ctx=cv.getContext('2d');
+let laneOff=0,dotOff=0,fogR=30,fogG=200,fogB=80,fogA=0,glideT=0,nightImg=null;
+function getNightImg(){if(nightImg)return nightImg;const blob=new Blob([`<svg width="339" height="245" viewBox="0 0 339 245" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g filter="url(#filter0_f_3_77)">
 <ellipse cx="169.5" cy="199" rx="65.5" ry="26" fill="black"/>
 </g>
@@ -644,114 +503,49 @@ function getNightImg(){
 <stop offset="0.98895" stop-color="white" stop-opacity="0"/>
 </radialGradient>
 </defs>
-</svg>`],{type:'image/svg+xml'});
-  nightImg=new Image();nightImg.src=URL.createObjectURL(blob);return nightImg;
-}
-function resizeCv(){cv.width=document.getElementById('roadWrap').offsetWidth;cv.height=document.getElementById('roadWrap').offsetHeight;}
+</svg>`],{type:'image/svg+xml'});nightImg=new Image();nightImg.src=URL.createObjectURL(blob);return nightImg;}
+function resizeCv(){const w=document.getElementById('roadWrap');cv.width=w.offsetWidth;cv.height=w.offsetHeight;}
 
 function renderRoad(){
-  const W=cv.width,H=cv.height;
-  if(!W||!H){requestAnimationFrame(renderRoad);return;}
+  const W=cv.width,H=cv.height;if(!W||!H){requestAnimationFrame(renderRoad);return;}
   const dark=document.body.classList.contains('dark');
-  const panelBg=dark?'#000000':'#ebebeb';
   ctx.clearRect(0,0,W,H);
   const spd=S.dispSpd;
-
-  // Fog
-  const accel=(S.targetSpd-S.prevSpd)>5;
-  const danger=spd>70||accel;
+  const accel=(S.targetSpd-S.prevSpd)>5,danger=spd>70||accel;
   if(accel){fogA=0.85;fogR=220;fogG=20;fogB=20;}
   else if(danger){fogA+=(0.55-fogA)*0.12;fogR+=(220-fogR)*0.15;fogG+=(20-fogG)*0.15;fogB+=(20-fogB)*0.15;}
   else if(spd>4){fogA+=(0.18-fogA)*0.05;fogR+=(30-fogR)*0.06;fogG+=(200-fogG)*0.06;fogB+=(80-fogB)*0.06;}
   else{fogA+=(0-fogA)*0.05;}
-
   const r=Math.round(fogR),g=Math.round(fogG),b=Math.round(fogB);
   const clEl=document.getElementById('cluster');
-  if(clEl){
-    if(fogA>0.01){
-      clEl.style.background=`linear-gradient(to bottom,rgba(${r},${g},${b},${(fogA*0.45).toFixed(3)}) 0%,rgba(${r},${g},${b},${(fogA*0.25).toFixed(3)}) 40%,rgba(${r},${g},${b},0.02) 100%)`;
-    }else{clEl.style.background=panelBg;}
-  }
-  if(fogA>0.005){
-    const fg=ctx.createRadialGradient(W/2,H*0.65,0,W/2,H*0.65,H*0.6);
-    fg.addColorStop(0,`rgba(${r},${g},${b},${(fogA*0.6).toFixed(3)})`);
-    fg.addColorStop(1,`rgba(${r},${g},${b},0)`);
-    ctx.fillStyle=fg;ctx.fillRect(0,0,W,H);
-  }
-
+  if(clEl){if(fogA>0.01)clEl.style.background=`linear-gradient(to bottom,rgba(${r},${g},${b},${(fogA*0.45).toFixed(3)}) 0%,rgba(${r},${g},${b},${(fogA*0.25).toFixed(3)}) 40%,rgba(${r},${g},${b},0.02) 100%)`;else clEl.style.background=dark?'#111':'#ebebeb';}
+  if(fogA>0.005){const fg=ctx.createRadialGradient(W/2,H*0.65,0,W/2,H*0.65,H*0.6);fg.addColorStop(0,`rgba(${r},${g},${b},${(fogA*0.6).toFixed(3)})`);fg.addColorStop(1,`rgba(${r},${g},${b},0)`);ctx.fillStyle=fg;ctx.fillRect(0,0,W,H);}
   // Lane lines
-  const ltx=W*0.36,lbx=W*0.06,rtx=W*0.64,rbx=W*0.94,ty=H*0.08,by=H;
+  const ltx=W*0.36,lbx=W*0.04,rtx=W*0.64,rbx=W*0.96,ty=H*0.08,by=H;
   if(spd>0)laneOff=(laneOff+spd*0.0008)%1.0;
-  const steps=32;
-  for(let i=0;i<steps;i++){
-    const t=((i/steps)+laneOff)%1.0,t2=(((i+1)/steps)+laneOff)%1.0;
-    const lx1=ltx+(lbx-ltx)*t,ly1=ty+(by-ty)*t,lx2=ltx+(lbx-ltx)*t2,ly2=ty+(by-ty)*t2;
-    const rx1=rtx+(rbx-rtx)*t,ry1=ty+(by-ty)*t,rx2=rtx+(rbx-rtx)*t2,ry2=ty+(by-ty)*t2;
-    const op=Math.pow(t,0.5)*0.88,lw=0.6+t*2.8;
-    ctx.strokeStyle=`rgba(33,150,243,${op})`;ctx.lineWidth=lw;ctx.lineCap='round';
-    ctx.beginPath();ctx.moveTo(lx1,ly1);ctx.lineTo(lx2,ly2);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(rx1,ry1);ctx.lineTo(rx2,ry2);ctx.stroke();
-  }
-
+  for(let i=0;i<32;i++){const t=((i/32)+laneOff)%1.0,t2=(((i+1)/32)+laneOff)%1.0;const lx1=ltx+(lbx-ltx)*t,ly1=ty+(by-ty)*t,lx2=ltx+(lbx-ltx)*t2,ly2=ty+(by-ty)*t2;const rx1=rtx+(rbx-rtx)*t,ry1=ty+(by-ty)*t,rx2=rtx+(rbx-rtx)*t2,ry2=ty+(by-ty)*t2;const op=Math.pow(t,0.5)*0.88,lw=0.6+t*2.8;ctx.strokeStyle=`rgba(33,150,243,${op})`;ctx.lineWidth=lw;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(lx1,ly1);ctx.lineTo(lx2,ly2);ctx.stroke();ctx.beginPath();ctx.moveTo(rx1,ry1);ctx.lineTo(rx2,ry2);ctx.stroke();}
+  // Centre dashes
+  if(spd>0)dotOff=(dotOff+spd*0.08)%60;
+  ctx.setLineDash([18,14]);ctx.lineDashOffset=-dotOff;
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.22)';
+  ctx.lineWidth=2;ctx.lineCap='butt';
+  ctx.beginPath();ctx.moveTo(W/2,ty);ctx.lineTo(W/2,by);ctx.stroke();
+  ctx.setLineDash([]);
   // Car
-  const carW=W*0.62,ni=getNightImg();
-  if(ni.complete&&ni.naturalWidth>0){
-    const ch=carW*(ni.naturalHeight/ni.naturalWidth);
-    const cx2=(W-carW)/2,baseY=H-ch-H*0.02;
-    if(spd>2){
-      glideT+=0.0012;
-      const bobY=-Math.abs(Math.sin(glideT))*6;
-      const swayX=Math.sin(glideT*0.35)*3;
-      ctx.drawImage(ni,cx2+swayX,baseY+bobY,carW,ch);
-    }else{ctx.drawImage(ni,cx2,baseY,carW,ch);}
-  }
+  const carW=W*0.58,ni=getNightImg();
+  if(ni.complete&&ni.naturalWidth>0){const ch=carW*(ni.naturalHeight/ni.naturalWidth);const cx2=(W-carW)/2,baseY=H-ch-H*0.02;if(spd>2){glideT+=0.0012;const bobY=-Math.abs(Math.sin(glideT))*6,swayX=Math.sin(glideT*0.35)*3;ctx.drawImage(ni,cx2+swayX,baseY+bobY,carW,ch);}else ctx.drawImage(ni,cx2,baseY,carW,ch);}
   requestAnimationFrame(renderRoad);
 }
 
-// ── Battery ──
-async function initBattery2(){
-  if(!('getBattery' in navigator))return;
-  try{
-    const bat=await navigator.getBattery();
-    function upd(){
-      const pct=Math.round(bat.level*100);
-      const fill=document.getElementById('batFill'),lbl=document.getElementById('batPct');
-      if(fill){fill.style.width=pct+'%';fill.style.background=bat.charging?'#1a73e8':pct>20?'#4caf50':'#e53935';}
-      if(lbl)lbl.textContent=pct+'%';
-    }
-    upd();bat.addEventListener('levelchange',upd);bat.addEventListener('chargingchange',upd);
-  }catch(e){}
-}
-
-// ── INIT ──
 window.addEventListener('load',()=>{
   resizeCv();window.addEventListener('resize',resizeCv);
-  renderRoad();refreshUI();initBattery2();
-
-  // Spotify
+  renderRoad();refreshUI();
   const _sp=new URLSearchParams(window.location.search);
-  if(_sp.get('code')){
-    handleSpotifyCallback(_sp.get('code'));
-  }else{
-    const t=localStorage.getItem('sp_tok'),e=localStorage.getItem('sp_tok_exp');
-    if(t&&e&&Date.now()<parseInt(e)){S.spotToken=t;initPlayer();}
-  }
-
-  // GPS — triggers permission prompt immediately, then watches
-  if(location.search.includes('demo')){
-    startDemo();
-  }else if('geolocation' in navigator){
-    navigator.geolocation.getCurrentPosition(
-      pos=>{
-        onGPS(pos);
-        navigator.geolocation.watchPosition(onGPS,
-          err=>console.warn('GPS watch error:',err.code,err.message),
-          {enableHighAccuracy:true,maximumAge:2000,timeout:15000}
-        );
-      },
-      err=>console.warn('GPS initial denied:',err.code,err.message),
-      {enableHighAccuracy:true,timeout:20000}
-    );
+  if(_sp.get('code')){handleCallback(_sp.get('code'));}
+  else{const t=localStorage.getItem('sp_tok'),e=localStorage.getItem('sp_tok_exp');if(t&&e&&Date.now()<parseInt(e)){S.spotToken=t;initPlayer();}}
+  if(location.search.includes('demo'))startDemo();
+  else if('geolocation' in navigator){
+    navigator.geolocation.getCurrentPosition(pos=>{onGPS(pos);navigator.geolocation.watchPosition(onGPS,err=>console.warn('GPS:',err.message),{enableHighAccuracy:true,maximumAge:2000,timeout:15000});},err=>console.warn('GPS denied:',err.message),{enableHighAccuracy:true,timeout:20000});
   }
 });
 </script>

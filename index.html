@@ -2,583 +2,637 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Tesla Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body.light{--bg:#e8e8e8;--cluster:#ebebeb;--text:#1a1a1a;--subtext:#9a9a9a;--divider:rgba(0,0,0,0.08);--btn-bg:rgba(0,0,0,0.04);--btn-border:rgba(0,0,0,0.12);--sp-bg:#fff;--sp-card:rgba(0,0,0,0.04);--range-bg:rgba(0,0,0,0.1)}
-body.dark{--bg:#0a0a0a;--cluster:#111;--text:#f0f0f0;--subtext:#555;--divider:rgba(255,255,255,0.06);--btn-bg:rgba(255,255,255,0.06);--btn-border:rgba(255,255,255,0.1);--sp-bg:#121212;--sp-card:rgba(255,255,255,0.06);--range-bg:rgba(255,255,255,0.1)}
-html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',sans-serif;transition:background 0.4s}
-#shell{width:100vw;height:100dvh;display:grid;grid-template-columns:420px 1fr}
+:root{
+  --bg:#050709;--glass:rgba(255,255,255,0.03);--glass2:rgba(255,255,255,0.055);
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --blue:#00a8cc;--amber:#e8a020;--green:#3db060;--red:#c0392b;
+  --white:#f0f2f5;--muted:#4a5060;--muted2:#6a7080;--text:#dde1ea;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif}
+#shell{display:grid;grid-template-rows:1fr 68px;height:100vh}
+#panels{display:grid;grid-template-columns:380px 1fr 270px;height:100%}
+.panel{background:linear-gradient(160deg,rgba(14,17,24,0.98) 0%,rgba(8,10,14,0.98) 100%);position:relative;overflow:hidden}
+.panel::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 120% 60% at 50% -10%,rgba(0,168,204,0.04) 0%,transparent 70%);pointer-events:none}
 
-/* CLUSTER */
-#cluster{background:var(--cluster);display:flex;flex-direction:column;height:100dvh;overflow:hidden;border-right:1px solid var(--divider);transition:background 0.3s;position:relative}
-.cl-top{display:flex;align-items:center;padding:10px 12px 6px;gap:5px;flex-shrink:0}
-.cl-top-temp{font-weight:600;font-size:15px;color:var(--text)}
-.cl-top-time{font-weight:600;font-size:15px;color:var(--text);margin-left:auto}
-.icon-btn{width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,123,228,0.3);background:rgba(0,123,228,0.06);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
-.icon-btn:hover{background:rgba(0,123,228,0.16);border-color:#007BE4}
-.icon-btn svg{width:14px;height:14px;stroke:#007BE4;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.icon-btn.active{background:rgba(0,123,228,0.22);border-color:#007BE4}
-.icon-sun{display:block}.icon-moon{display:none}
-body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
-.cl-speed-block{padding:0 16px;flex-shrink:0}
-.cl-speed-num{font-family:'Inter',sans-serif;font-weight:300;font-size:120px;line-height:0.9;letter-spacing:-6px;color:var(--text);transition:color 0.5s;display:block}
-.cl-speed-num.danger{color:#d32f2f}
-.cl-speed-unit{font-size:10px;font-weight:600;letter-spacing:4px;color:var(--text);text-transform:uppercase;margin-top:2px}
-.cl-data{padding:4px 16px 6px;flex-shrink:0}
-.cl-data-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
-.cl-data-label{font-size:12px;font-weight:600;color:var(--text)}
-.cl-data-val{font-family:'Inter',sans-serif;font-weight:600;font-size:16px;color:var(--text)}
-.cl-divider{width:100%;height:1px;background:var(--divider);flex-shrink:0}
-.cl-steering{display:flex;justify-content:center;padding:5px 0 3px;flex-shrink:0}
-#roadWrap{flex:1;min-height:0;position:relative;overflow:hidden}
-#roadCanvas{position:absolute;inset:0;width:100%;height:100%}
+/* LEFT */
+#left{border-right:1px solid var(--border);display:flex;flex-direction:column}
+.l-top{display:flex;flex-direction:column;align-items:center;padding:16px 20px 0;position:relative;z-index:2;flex-shrink:0}
+.gear-strip{display:flex;gap:20px;font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:3px;color:var(--muted);margin-bottom:8px}
+.gear-strip .g.on{color:var(--white);font-size:15px;text-shadow:0 0 12px rgba(0,168,204,0.6)}
+.spd-wrap{text-align:center;position:relative;margin-bottom:4px}
+.spd-num{font-family:'Exo 2',sans-serif;font-size:96px;font-weight:200;line-height:0.9;color:#fff;letter-spacing:-5px;text-shadow:0 0 60px rgba(0,168,204,0.2),0 2px 4px rgba(0,0,0,0.8)}
+.spd-unit{font-size:11px;letter-spacing:5px;color:var(--muted2);font-weight:300;margin-top:6px}
+.limit-badge{position:absolute;top:0;right:0;width:42px;height:42px;border-radius:50%;border:3px solid #c0392b;background:#fff;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;color:#111;box-shadow:0 0 16px rgba(192,57,43,0.4)}
+.ap-row{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.ap-circ{width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--muted2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:'Share Tech Mono',monospace}
+.ap-circ:hover{border-color:var(--blue);color:var(--blue);background:rgba(0,168,204,0.06)}
+.ap-set{width:54px;height:54px;border-radius:50%;border:1px solid var(--border2);background:rgba(0,0,0,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.ap-set .al{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.ap-set .av{font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--text)}
+#roadCanvas{display:block;width:100%;flex-shrink:0}
+.fuel-wrap{padding:4px 20px 6px;position:relative;z-index:2;flex-shrink:0}
+.fuel-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.fuel-lbl{font-size:9px;letter-spacing:4px;color:var(--muted);text-transform:uppercase}
+.fuel-pct{font-family:'Share Tech Mono',monospace;font-size:20px;color:var(--amber);letter-spacing:1px}
+.gauge-arc-wrap{display:flex;justify-content:center}
+.trip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 20px 14px;flex-shrink:0}
+.trip-cell{background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center}
+.tc-val{font-family:'Share Tech Mono',monospace;font-size:17px;color:var(--blue);line-height:1}
+.tc-lbl{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
 
-/* SPOTIFY PANEL */
-#spotPanel{display:flex;flex-direction:column;height:100dvh;background:var(--sp-bg);overflow:hidden;transition:background 0.4s;position:relative}
+/* CENTRE */
+#centre{border-right:1px solid var(--border);display:flex;flex-direction:column}
+#mapCanvas{display:block;width:100%;height:110px;flex-shrink:0}
+.loc-bar{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.loc-text{font-size:13px;color:var(--text)}
+.loc-coords{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted2)}
+.gps-pill{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:4px;background:rgba(61,176,96,0.12);border:1px solid rgba(61,176,96,0.3);color:var(--green);animation:pulse 2.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.apps-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;border-bottom:1px solid var(--border);flex-shrink:0}
+.app-tile{padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;background:transparent;border:none;color:var(--text);transition:background 0.2s;text-decoration:none;border-right:1px solid var(--border)}
+.app-tile:last-child{border-right:none}
+.app-tile:hover{background:var(--glass2)}
+.app-tile svg{width:26px;height:26px}
+.app-tile span{font-size:9px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
+.stat-cell{padding:14px 12px;text-align:center;border-right:1px solid var(--border)}
+.stat-cell:last-child{border-right:none}
+.sc-val{font-family:'Share Tech Mono',monospace;font-size:22px;color:var(--green);line-height:1}
+.sc-lbl{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.media-section{flex:1;display:flex;flex-direction:column;min-height:0;padding:14px 16px}
+.media-lbl{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;flex-shrink:0}
+.spotify-frame{flex:1;border-radius:10px;overflow:hidden;border:1px solid var(--border);min-height:0}
+.spotify-frame iframe{width:100%;height:100%;border:none}
 
-/* Login screen */
-#spotLogin{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:40px}
-.sp-logo{width:72px;height:72px}
-.sp-login-title{font-size:22px;font-weight:700;color:var(--text);text-align:center}
-.sp-login-sub{font-size:14px;color:var(--subtext);text-align:center}
-.sp-connect-btn{background:#1db954;border:none;border-radius:50px;color:#fff;padding:16px 48px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:0.5px;transition:transform 0.1s,background 0.2s}
-.sp-connect-btn:hover{background:#1ed760;transform:scale(1.02)}
-.sp-connect-btn:active{transform:scale(0.98)}
+/* RIGHT */
+#right{display:flex;flex-direction:column}
+.qc-head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.qc-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue)}
+.qc-head-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted2)}
+.qc-scroll{flex:1;overflow-y:auto;scrollbar-width:none}
+.qc-scroll::-webkit-scrollbar{display:none}
+.qc-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s}
+.qc-row:hover{background:var(--glass2)}
+.qc-icon-box{width:34px;height:34px;border-radius:8px;background:var(--glass);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qc-icon-box svg{width:16px;height:16px;stroke:var(--muted2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.qc-label{font-size:13px;color:var(--text);font-weight:300}
+.qc-badge{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--red)}
+.lights-sub{padding:12px 16px;background:rgba(0,0,0,0.3);border-bottom:1px solid var(--border);display:none}
+.lights-sub.open{display:block}
+.ls-grp{margin-bottom:10px}
+.ls-title{font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.seg-ctrl{display:flex;background:#0a0c10;border-radius:6px;border:1px solid var(--border);overflow:hidden}
+.seg-btn{flex:1;padding:7px 2px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);cursor:pointer;border:none;background:transparent;transition:all 0.2s}
+.seg-btn.on{background:rgba(0,168,204,0.14);color:var(--blue)}
+.glove-btn{margin:12px;border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;background:transparent;transition:background 0.2s;width:calc(100% - 24px)}
+.glove-btn:hover{background:var(--glass2);border-color:var(--border2)}
+.glove-btn svg{width:18px;height:18px;stroke:var(--muted2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.glove-btn span{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted2)}
 
-/* Player */
-#spotPlayer{display:none;flex-direction:column;height:100dvh;overflow:hidden}
-
-/* Now playing bar */
-.sp-nowplaying{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--sp-bg);border-bottom:1px solid var(--divider);flex-shrink:0}
-.sp-art{width:52px;height:52px;border-radius:6px;object-fit:cover;background:var(--btn-bg);flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
-.sp-np-info{flex:1;min-width:0}
-.sp-np-track{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-np-artist{font-size:12px;color:var(--subtext);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-np-controls{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.sp-ctrl-btn{background:none;border:none;cursor:pointer;color:var(--subtext);display:flex;align-items:center;justify-content:center;transition:color 0.2s;padding:4px}
-.sp-ctrl-btn:hover{color:var(--text)}
-.sp-play-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--text);background:transparent;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:all 0.2s}
-.sp-play-btn:hover{background:var(--btn-bg)}
-
-/* Progress */
-.sp-progress{padding:8px 20px 4px;flex-shrink:0}
-.sp-prog-bar{width:100%;height:3px;background:var(--range-bg);border-radius:2px;cursor:pointer}
-.sp-prog-fill{height:100%;border-radius:2px;background:#1db954;transition:width 0.8s linear}
-.sp-prog-times{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--subtext);font-family:'Inter',sans-serif}
-
-/* Search */
-.sp-search{padding:10px 16px 8px;flex-shrink:0}
-.sp-search-box{display:flex;align-items:center;gap:10px;background:var(--btn-bg);border:1px solid var(--btn-border);border-radius:24px;padding:0 14px;height:38px}
-.sp-search-box input{border:none;background:transparent;outline:none;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);flex:1}
-.sp-search-box input::placeholder{color:var(--subtext)}
-.sp-search-box svg{stroke:var(--subtext);flex-shrink:0;width:15px;height:15px;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
-
-/* Content area */
-.sp-content{flex:1;overflow-y:auto;padding:10px 16px 16px;scrollbar-width:thin;scrollbar-color:var(--divider) transparent}
-.sp-content::-webkit-scrollbar{width:4px}
-.sp-content::-webkit-scrollbar-thumb{background:var(--divider);border-radius:2px}
-.sp-section-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--subtext);margin:10px 0 10px;padding-left:2px}
-.sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-bottom:20px}
-.sp-card{background:var(--sp-card);border-radius:10px;padding:10px;cursor:pointer;transition:background 0.2s}
-.sp-card:hover{background:var(--btn-bg)}
-.sp-card img{width:100%;aspect-ratio:1;border-radius:6px;object-fit:cover;background:var(--btn-bg);display:block;margin-bottom:8px}
-.sp-card-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-card-sub{font-size:10px;color:var(--subtext);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-list{display:flex;flex-direction:column;gap:2px;margin-bottom:16px}
-.sp-list-item{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background 0.15s}
-.sp-list-item:hover{background:var(--sp-card)}
-.sp-list-item img{width:42px;height:42px;border-radius:4px;object-fit:cover;background:var(--btn-bg);flex-shrink:0}
-.sp-list-info{flex:1;min-width:0}
-.sp-list-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-list-sub{font-size:11px;color:var(--subtext);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-list-dur{font-size:11px;color:var(--subtext);flex-shrink:0;font-family:'Inter',sans-serif}
-.sp-empty{text-align:center;padding:40px 20px;color:var(--subtext);font-size:14px}
-
-/* Modal */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:3000;align-items:center;justify-content:center}
-.modal-overlay.open{display:flex}
-.modal-box{background:var(--cluster);border:1px solid var(--divider);border-radius:20px;padding:26px;min-width:280px}
-.modal-title{font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--subtext);margin-bottom:16px}
-.modal-input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--btn-border);background:var(--btn-bg);color:var(--text);font-size:22px;font-family:'Inter',sans-serif;font-weight:200;text-align:center;outline:none;margin-bottom:14px}
-.modal-input:focus{border-color:#4caf50}
-.modal-btns{display:flex;gap:8px}
-.modal-btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--btn-border);background:transparent;color:var(--subtext);cursor:pointer;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'Inter',sans-serif;font-weight:500}
-.modal-btn.ok{background:#4caf50;border-color:#4caf50;color:#fff}
-
-/* Fullscreen now playing */
-#spFullscreen{display:none;position:absolute;inset:0;z-index:100;background:#000;flex-direction:column;align-items:center;justify-content:center;padding:40px}
-#spFullscreen.open{display:flex}
-#spFullscreen .fs-art{width:240px;height:240px;border-radius:16px;object-fit:cover;box-shadow:0 20px 60px rgba(0,0,0,0.6);margin-bottom:28px}
-#spFullscreen .fs-track{font-size:24px;font-weight:700;color:#fff;text-align:center;margin-bottom:8px}
-#spFullscreen .fs-artist{font-size:16px;color:rgba(255,255,255,0.6);text-align:center;margin-bottom:28px}
-#spFullscreen .fs-prog-bar{width:100%;max-width:400px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin-bottom:8px;cursor:pointer}
-#spFullscreen .fs-prog-fill{height:100%;border-radius:2px;background:#1db954;transition:width 0.8s linear}
-#spFullscreen .fs-times{display:flex;justify-content:space-between;width:100%;max-width:400px;font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:28px;font-family:'Inter',sans-serif}
-#spFullscreen .fs-controls{display:flex;align-items:center;gap:32px}
-#spFullscreen .fs-btn{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;transition:color 0.2s}
-#spFullscreen .fs-btn:hover{color:#fff}
-#spFullscreen .fs-play{width:64px;height:64px;border-radius:50%;border:2px solid #fff;background:transparent;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
-#spFullscreen .fs-play:hover{background:rgba(255,255,255,0.1)}
-#spFullscreen .fs-close{position:absolute;top:20px;right:20px;background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.5);font-size:28px;line-height:1}
-#spFullscreen .fs-close:hover{color:#fff}
+/* BOTTOM */
+#bottom{background:rgba(5,7,9,0.98);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 16px;height:68px}
+.btm-left{display:flex;align-items:center;gap:2px;flex:1}
+.btm-icon{width:48px;height:48px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all 0.2s;text-decoration:none}
+.btm-icon:hover{color:var(--text);background:var(--glass)}
+.btm-icon.active{color:var(--blue)}
+.btm-icon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.btm-icon-lbl{font-size:7px;letter-spacing:1px;text-transform:uppercase}
+.btm-climate{display:flex;align-items:center;gap:20px;padding:0 24px;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.clm-zone{display:flex;align-items:center;gap:8px}
+.clm-arrows{display:flex;flex-direction:column}
+.clm-arrows button{background:none;border:none;color:var(--muted);font-size:9px;cursor:pointer;line-height:1.4;padding:0 4px;transition:color 0.2s}
+.clm-arrows button:hover{color:var(--blue)}
+.clm-temp{font-family:'Share Tech Mono',monospace;font-size:24px;color:var(--text);line-height:1}
+.clm-deg{font-size:11px;color:var(--muted);vertical-align:super}
+.fan-center{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 10px;border-radius:8px;transition:background 0.2s}
+.fan-center:hover{background:var(--glass)}
+#fanSVG{width:28px;height:28px;stroke:var(--muted2)}
+.fan-lbl{font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.btm-right{display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end}
+.status-icons{display:flex;gap:6px;align-items:center}
+.status-icons svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.clock{font-family:'Share Tech Mono',monospace;font-size:20px;color:var(--text);letter-spacing:2px;padding-left:10px;border-left:1px solid var(--border)}
+.temp-ext{font-size:12px;color:var(--muted2)}
 </style>
 </head>
-<body class="light">
+<body>
 <div id="shell">
+<div id="panels">
 
-<!-- CLUSTER -->
-<div id="cluster">
-  <div class="cl-top">
-    <span class="cl-top-temp" id="clTemp">-- °C</span>
-    <button class="icon-btn" onclick="openModal('odo')" title="Set ODO"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></button>
-    <button class="icon-btn" onclick="resetTrip()" title="Reset Trip"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
-    <button class="icon-btn theme-btn" onclick="toggleTheme()" title="Theme"><svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-    <button class="icon-btn" onclick="toggleFS()" title="Fullscreen"><svg id="fsIco" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
-    <button class="icon-btn" id="demoBtn" onclick="toggleDemo()" title="Demo"><svg viewBox="0 0 24 24" fill="#007BE4" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
-    <span class="cl-top-time" id="clTime">--:--</span>
+<!-- LEFT -->
+<div class="panel" id="left">
+  <div class="l-top">
+    <div class="gear-strip">
+      <span class="g">P</span><span class="g">R</span><span class="g">N</span><span class="g on">D</span>
+    </div>
+    <div class="spd-wrap">
+      <div class="spd-num" id="spdNum">0</div>
+      <div class="spd-unit">M P H</div>
+      <div class="limit-badge">30</div>
+    </div>
+    <div class="ap-row">
+      <button class="ap-circ" onclick="adjLimit(-5)">−</button>
+      <div class="ap-set"><span class="al">SET</span><span class="av" id="spdSet">30</span></div>
+      <button class="ap-circ" onclick="adjLimit(5)">+</button>
+    </div>
   </div>
-  <div class="cl-speed-block">
-    <span class="cl-speed-num" id="spdNum">0</span>
-    <div class="cl-speed-unit">MPH</div>
+  <canvas id="roadCanvas"></canvas>
+  <div class="fuel-wrap">
+    <div class="fuel-header">
+      <span class="fuel-lbl">Fuel Level</span>
+      <span class="fuel-pct" id="fuelPctTxt">72%</span>
+    </div>
+    <div class="gauge-arc-wrap">
+      <canvas id="fuelCanvas" width="260" height="96"></canvas>
+    </div>
   </div>
-  <div class="cl-data">
-    <div class="cl-data-row"><span class="cl-data-label">Trip</span><span class="cl-data-val" id="tripVal">0.0 mi</span></div>
-    <div class="cl-data-row"><span class="cl-data-label">ODO</span><span class="cl-data-val" id="odoVal">-- mi</span></div>
+  <div class="trip-grid">
+    <div class="trip-cell"><div class="tc-val" id="tripVal">0.0</div><div class="tc-lbl">Trip mi</div></div>
+    <div class="trip-cell"><div class="tc-val" id="avgVal">0</div><div class="tc-lbl">Avg mph</div></div>
+    <div class="trip-cell"><div class="tc-val" id="topVal">0</div><div class="tc-lbl">Top mph</div></div>
   </div>
-  <div class="cl-divider"></div>
-  <div class="cl-steering">
-    <svg width="30" height="30" viewBox="0 0 48 48" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M46 24C46 36.1501 36.1501 46 24 46C11.8499 46 2 36.1501 2 24C2 11.8499 11.8499 2 24 2C36.1501 2 46 11.8499 46 24ZM6.24927 27.0017C15.9578 27.1345 20.4526 35.0271 20.9526 41.7432C13.438 40.4619 7.51172 34.5227 6.24927 27.0017ZM6.10986 22H10.5C12.2219 22 13.666 21.4441 15.3108 20.8108C17.4866 19.9729 20.0134 19 24 19C27.9866 19 30.5134 19.9729 32.6892 20.8108C34.334 21.4441 35.7781 22 37.5 22H41.8901C40.8953 13 33.2651 6 24 6C14.7349 6 7.10474 13 6.10986 22ZM27.0474 41.7432C27.5474 35.0271 32.0422 27.1345 41.7507 27.0017C40.4883 34.5227 34.562 40.4619 27.0474 41.7432Z" fill="#007BE4"/></svg>
-  </div>
-  <div id="roadWrap"><canvas id="roadCanvas"></canvas></div>
 </div>
 
-<!-- SPOTIFY PANEL -->
-<div id="spotPanel" style="position:relative;">
-
-  <!-- LOGIN -->
-  <div id="spotLogin">
-    <svg class="sp-logo" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" fill="#1db954"/>
-      <path d="M8 12.5c2.5-1.5 6-1.5 8 0" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-      <path d="M7 9.5c3.5-2 8-2 10 0" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-      <path d="M9 15.5c2-1 5-1 6.5 0" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-    </svg>
-    <div class="sp-login-title">Spotify</div>
-    <div class="sp-login-sub">Connect to stream music while you drive</div>
-    <button class="sp-connect-btn" onclick="spotifyLogin()">Connect with Spotify</button>
+<!-- CENTRE -->
+<div class="panel" id="centre">
+  <canvas id="mapCanvas"></canvas>
+  <div class="loc-bar">
+    <div>
+      <div class="loc-text" id="locAddr">Acquiring location…</div>
+      <div class="loc-coords" id="locCoords">LAT —&nbsp;&nbsp;LON —</div>
+    </div>
+    <div class="gps-pill" id="gpsPill">GPS</div>
   </div>
+  <div class="apps-row">
+    <a class="app-tile" href="https://waze.com" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      <span>Waze</span>
+    </a>
+    <a class="app-tile" href="https://open.spotify.com" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12.5c2.5-1.5 6-1.5 8 0M8 15.5c2-1 5.5-.5 7 .5M9 9.5c3-1.5 7-1 9 .5"/></svg>
+      <span>Spotify</span>
+    </a>
+    <a class="app-tile" href="https://www.jefit.com" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M18 4v16M2 9h4M18 9h4M2 15h4M18 15h4M6 12h12"/></svg>
+      <span>Gym</span>
+    </a>
+    <a class="app-tile" href="https://maps.google.com" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+      <span>Maps</span>
+    </a>
+  </div>
+  <div class="stats-row">
+    <div class="stat-cell"><div class="sc-val" id="totalMi">0.0</div><div class="sc-lbl">Total mi</div></div>
+    <div class="stat-cell"><div class="sc-val" id="driveTime">00:00</div><div class="sc-lbl">Drive time</div></div>
+    <div class="stat-cell"><div class="sc-val" id="gForce">0.0</div><div class="sc-lbl">G-Force</div></div>
+  </div>
+  <div class="media-section">
+    <div class="media-lbl">Now Playing</div>
+    <div class="spotify-frame">
+      <iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX0BF4ezvoh8P?utm_source=generator&theme=0"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
 
-  <!-- PLAYER -->
-  <div id="spotPlayer">
+<!-- RIGHT -->
+<div class="panel" id="right">
+  <div class="qc-head">
+    <div class="qc-dot"></div>
+    <div class="qc-head-label">Quick Controls</div>
+  </div>
+  <div class="qc-scroll">
 
-    <!-- Now playing -->
-    <div class="sp-nowplaying">
-      <div onclick="toggleFsNow()" style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;cursor:pointer;">
-        <img id="spArt" class="sp-art" src="" alt="">
-        <div class="sp-np-info">
-          <div class="sp-np-track" id="spTrack">Nothing playing</div>
-          <div class="sp-np-artist" id="spArtist">--</div>
+    <div class="qc-row" onclick="toggleSub('lightsub')">
+      <div class="qc-icon-box"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 3.5-2.5 6-4 7.5V18H9v-1.5C7.5 15 5 12.5 5 9a7 7 0 0 1 7-7z"/><path d="M9 21h6M10 18h4"/></svg></div>
+      <span class="qc-label">Lights</span>
+    </div>
+    <div class="lights-sub" id="lightsub">
+      <div class="ls-grp"><div class="ls-title">Headlights</div>
+        <div class="seg-ctrl">
+          <button class="seg-btn" onclick="seg(this)">OFF</button>
+          <button class="seg-btn" onclick="seg(this)">PARK</button>
+          <button class="seg-btn" onclick="seg(this)">10%</button>
+          <button class="seg-btn" onclick="seg(this)">ON</button>
+          <button class="seg-btn on" onclick="seg(this)">AUTO</button>
         </div>
       </div>
-      <div class="sp-np-controls">
-        <button class="sp-ctrl-btn" onclick="spPrev()"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
-        <button class="sp-play-btn" onclick="spToggle()"><svg id="spPlayIco" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg></button>
-        <button class="sp-ctrl-btn" onclick="spNext()"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg></button>
+      <div class="ls-grp"><div class="ls-title">Interior</div>
+        <div class="seg-ctrl">
+          <button class="seg-btn" onclick="seg(this)">OFF</button>
+          <button class="seg-btn" onclick="seg(this)">10%</button>
+          <button class="seg-btn on" onclick="seg(this)">AUTO</button>
+        </div>
+      </div>
+      <div class="ls-grp"><div class="ls-title">Front Fog</div>
+        <div class="seg-ctrl">
+          <button class="seg-btn on" onclick="seg(this)">OFF</button>
+          <button class="seg-btn" onclick="seg(this)">ON</button>
+        </div>
       </div>
     </div>
 
-    <!-- Progress -->
-    <div class="sp-progress">
-      <div class="sp-prog-bar"><div class="sp-prog-fill" id="spProgFill" style="width:0%"></div></div>
-      <div class="sp-prog-times"><span id="spPos">0:00</span><span id="spDur">0:00</span></div>
+    <div class="qc-row" onclick="toggleSub('locksub')">
+      <div class="qc-icon-box"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+      <span class="qc-label">Locks</span>
     </div>
-
-    <!-- Search -->
-    <div class="sp-search">
-      <div class="sp-search-box">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="spSearchInp" type="text" placeholder="Search songs, artists, albums…" onkeydown="if(event.key==='Enter')spSearch()">
+    <div class="lights-sub" id="locksub">
+      <div class="ls-grp">
+        <div class="seg-ctrl">
+          <button class="seg-btn on" onclick="seg(this)">LOCKED</button>
+          <button class="seg-btn" onclick="seg(this)">UNLOCKED</button>
+        </div>
       </div>
     </div>
 
-    <!-- Content grid -->
-    <div class="sp-content" id="spContent">
-      <div class="sp-empty">Search for music above<br>or start playing on Spotify</div>
+    <div class="qc-row">
+      <div class="qc-icon-box"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+      <span class="qc-label">Display</span>
+    </div>
+
+    <div class="qc-row" onclick="toggleSub('drivesub')">
+      <div class="qc-icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div>
+      <span class="qc-label">Driving</span>
+    </div>
+    <div class="lights-sub" id="drivesub">
+      <div class="ls-grp"><div class="ls-title">Drive Mode</div>
+        <div class="seg-ctrl">
+          <button class="seg-btn" onclick="seg(this)">ECO</button>
+          <button class="seg-btn on" onclick="seg(this)">NORMAL</button>
+          <button class="seg-btn" onclick="seg(this)">SPORT</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="qc-row">
+      <div class="qc-icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+      <span class="qc-label">Autopilot</span>
+    </div>
+
+    <div class="qc-row">
+      <div class="qc-icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l9 4v6c0 5-4 9-9 10C3 21 3 16 3 12V6l9-4z"/></svg></div>
+      <span class="qc-label">Safety &amp; Security</span>
+      <div class="qc-badge"></div>
+    </div>
+
+    <div class="qc-row">
+      <div class="qc-icon-box"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+      <span class="qc-label">Service</span>
     </div>
 
   </div>
-</div>
-</div><!-- /shell -->
-
-<!-- FULLSCREEN NOW PLAYING -->
-<div id="spFullscreen">
-  <button class="fs-close" onclick="event.stopPropagation();toggleFsNow()">✕</button>
-  <img class="fs-art" id="fspArt" src="" alt="">
-  <div class="fs-track" id="fspTrack">--</div>
-  <div class="fs-artist" id="fspArtist">--</div>
-  <div class="fs-prog-bar" onclick="seekSpot(event, this)">
-    <div class="fs-prog-fill" id="fspProgFill" style="width:0%"></div>
-  </div>
-  <div class="fs-times"><span id="fspPos">0:00</span><span id="fspDur">0:00</span></div>
-  <div class="fs-controls">
-    <button class="fs-btn" onclick="spPrev()"><svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
-    <button class="fs-play" onclick="spToggle()"><svg id="fspPlayIco" viewBox="0 0 24 24" fill="currentColor" width="26" height="26"><path d="M8 5v14l11-7z"/></svg></button>
-    <button class="fs-btn" onclick="spNext()"><svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg></button>
-  </div>
+  <button class="glove-btn">
+    <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+    <span>Glovebox</span>
+  </button>
 </div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="odoModal">
-  <div class="modal-box">
-    <div class="modal-title">Set Odometer</div>
-    <input class="modal-input" type="number" id="odoInp" placeholder="e.g. 25145" min="0">
-    <div class="modal-btns">
-      <button class="modal-btn" onclick="closeModal('odo')">Cancel</button>
-      <button class="modal-btn ok" onclick="confirmOdo()">Set</button>
+</div><!-- /panels -->
+
+<!-- BOTTOM -->
+<div id="bottom">
+  <div class="btm-left">
+    <button class="btm-icon active">
+      <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="13" rx="3"/><path d="M5 7V5a7 7 0 0 1 14 0v2"/></svg>
+      <span class="btm-icon-lbl">Car</span>
+    </button>
+    <a class="btm-icon" href="https://waze.com" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      <span class="btm-icon-lbl">Nav</span>
+    </a>
+    <button class="btm-icon">
+      <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      <span class="btm-icon-lbl">Media</span>
+    </button>
+    <button class="btm-icon">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span class="btm-icon-lbl">Comfort</span>
+    </button>
+  </div>
+
+  <div class="btm-climate">
+    <div class="clm-zone">
+      <div class="clm-arrows">
+        <button onclick="cTemp('L',1)">▲</button>
+        <button onclick="cTemp('L',-1)">▼</button>
+      </div>
+      <div class="clm-temp"><span id="tL">20</span><sup class="clm-deg">°</sup></div>
+    </div>
+    <div class="fan-center" onclick="cycleFan()">
+      <svg id="fanSVG" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+        <path d="M12 12c-2-2.5-2-6 0-8s5-2 6 0c1 2-1 4-3 4"/>
+        <path d="M12 12c2 2.5 6 2 8 0s2-5 0-6c-2-1-4 1-4 3"/>
+        <path d="M12 12c2.5 2 2 6 0 8s-5 2-6 0c-1-2 1-4 3-4"/>
+        <path d="M12 12c-2.5-2-6-2-8 0s-2 5 0 6c2 1 4-1 4-3"/>
+        <circle cx="12" cy="12" r="2"/>
+      </svg>
+      <div class="fan-lbl" id="fanLbl">MANUAL</div>
+    </div>
+    <div class="clm-zone">
+      <div class="clm-temp"><span id="tR">20</span><sup class="clm-deg">°</sup></div>
+      <div class="clm-arrows">
+        <button onclick="cTemp('R',1)">▲</button>
+        <button onclick="cTemp('R',-1)">▼</button>
+      </div>
     </div>
   </div>
+
+  <div class="btm-right">
+    <span class="temp-ext">17°C</span>
+    <div class="status-icons">
+      <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="var(--muted)"/></svg>
+      <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="var(--muted)"/></svg>
+      <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    </div>
+    <div class="clock" id="clk">--:--</div>
+  </div>
+</div>
 </div>
 
 <script>
-const SPOT_CLIENT='9ccf3c3270234334b3c74317f5ebd466';
-const SPOT_REDIRECT='https://venureddyy.github.io/run/';
-const SPOT_SCOPES='streaming user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read user-top-read';
-const S={targetSpd:0,prevSpd:0,dispSpd:0,trip:0,odo:null,lat:null,lon:null,lastLat:null,lastLon:null,tempFetched:false,spotToken:null,spotPlaying:false,spotDur:0,spotPos:0};
-
 // Clock
-function tickClock(){const n=new Date();document.getElementById('clTime').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
-tickClock();setInterval(tickClock,10000);
+const clk=()=>{const n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0');document.getElementById('clk').textContent=h+':'+m};
+clk();setInterval(clk,10000);
 
-// Temp
-async function fetchTemp(lat,lon){try{const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);const d=await r.json();document.getElementById('clTemp').textContent=Math.round(d.current_weather.temperature)+' °C';}catch(e){}}
+// Climate
+const T={L:20,R:20};
+function cTemp(s,d){T[s]=Math.max(16,Math.min(32,T[s]+d));document.getElementById('t'+s).textContent=T[s]}
 
-function hav(la1,lo1,la2,lo2){const R=3958.8,r=d=>d*Math.PI/180;const a=Math.sin(r(la2-la1)/2)**2+Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(r(lo2-lo1)/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
-function showSpd(s){const el=document.getElementById('spdNum');if(el){el.textContent=s;el.classList.toggle('danger',s>70);}}
+// Fan
+const fanModes=['AUTO','LOW','MED','HIGH','MAX'];let fi=1;
+function cycleFan(){fi=(fi+1)%fanModes.length;document.getElementById('fanLbl').textContent=fanModes[fi]}
+let fanAngle=0;
+(function spinFan(){fanAngle+=fi===0?0.4:fi*1.5;document.getElementById('fanSVG').style.transform='rotate('+fanAngle+'deg)';requestAnimationFrame(spinFan)})();
+
+// UI helpers
+function seg(el){el.closest('.seg-ctrl').querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on')}
+function toggleSub(id){document.getElementById(id).classList.toggle('open')}
+function adjLimit(d){const el=document.getElementById('spdSet');el.textContent=Math.max(20,Math.min(70,+el.textContent+d))}
+
+// Fuel arc gauge
+let fuelPct=72;
+function drawFuel(pct){
+  const cv=document.getElementById('fuelCanvas');
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height,cx=W/2,cy=H;
+  ctx.clearRect(0,0,W,H);
+  const r=80;
+  // bg arc
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,0,false);
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=14;ctx.lineCap='butt';ctx.stroke();
+  // coloured fill
+  const grad=ctx.createLinearGradient(cx-r,0,cx+r,0);
+  grad.addColorStop(0,'#c0392b');grad.addColorStop(0.35,'#e8a020');grad.addColorStop(1,'#3db060');
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,Math.PI+(Math.PI*pct/100),false);
+  ctx.strokeStyle=grad;ctx.lineWidth=14;ctx.lineCap='butt';ctx.stroke();
+  // soft glow
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,Math.PI+(Math.PI*pct/100),false);
+  ctx.strokeStyle='rgba(232,160,32,0.1)';ctx.lineWidth=22;ctx.stroke();
+  // ticks
+  for(let i=0;i<=10;i++){
+    const a=Math.PI*(i/10);
+    const inner=r-8,outer=r+(i%5===0?10:4);
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(a)*inner,cy+Math.sin(a)*inner);
+    ctx.lineTo(cx+Math.cos(a)*outer,cy+Math.sin(a)*outer);
+    ctx.strokeStyle=i%5===0?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.08)';
+    ctx.lineWidth=i%5===0?2:1;ctx.stroke();
+  }
+  // E / F labels
+  ctx.font='10px "Share Tech Mono",monospace';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.textAlign='center';
+  ctx.fillText('E',cx-r-2,cy-2);ctx.fillText('F',cx+r+2,cy-2);
+  ctx.fillText('½',cx,cy-r-6);
+  // needle
+  const na=Math.PI*(pct/100);
+  ctx.save();ctx.translate(cx,cy);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(na)*66,Math.sin(na)*66);
+  ctx.strokeStyle='rgba(255,255,255,0.75)';ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1;ctx.stroke();
+  ctx.restore();
+}
+drawFuel(fuelPct);
+setInterval(()=>{if(fuelPct>4){fuelPct-=0.004;drawFuel(fuelPct);document.getElementById('fuelPctTxt').textContent=Math.round(fuelPct)+'%'}},2000);
+
+// Road + Car scene
+(function(){
+  const cv=document.getElementById('roadCanvas');
+  const leftEl=document.getElementById('left');
+  let curSpd=0;
+  let laneOff=0;
+
+  function resize(){
+    cv.width=leftEl.offsetWidth;
+    cv.height=Math.round(leftEl.offsetHeight*0.3);
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  const ctx=cv.getContext('2d');
+
+  function rr(ctx,x,y,w,h,r){
+    ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+  }
+
+  function draw(){
+    const W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+
+    // Road bg
+    const rg=ctx.createLinearGradient(0,0,0,H);
+    rg.addColorStop(0,'#0c1018');rg.addColorStop(1,'#07090d');
+    const lx=W*0.18,rx=W*0.82,tlx=W*0.32,trx=W*0.68;
+    ctx.fillStyle=rg;
+    ctx.beginPath();ctx.moveTo(tlx,0);ctx.lineTo(trx,0);ctx.lineTo(rx,H);ctx.lineTo(lx,H);ctx.closePath();ctx.fill();
+
+    // Road edges
+    ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(tlx,0);ctx.lineTo(lx,H);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(trx,0);ctx.lineTo(rx,H);ctx.stroke();
+
+    // Lane dashes
+    const speed=curSpd>3?curSpd*0.5:0;
+    laneOff=(laneOff+speed)%60;
+    for(let d=laneOff-60;d<H+60;d+=60){
+      const p=Math.max(0,Math.min(1,d/H));
+      const dw=1.5+p*2,dh=Math.max(3,14*p);
+      ctx.fillStyle=`rgba(0,168,204,${0.08+p*0.22})`;
+      ctx.fillRect(W*0.5-dw/2,d,dw,dh*0.6);
+    }
+
+    // Headlight cones
+    const carBottom=H*0.88;
+    const hl=W*0.38,hr=W*0.62;
+    const cone=ctx.createLinearGradient(0,0,0,carBottom);
+    cone.addColorStop(0,'rgba(0,168,204,0)');cone.addColorStop(1,'rgba(0,168,204,0.055)');
+    ctx.fillStyle=cone;
+    ctx.beginPath();ctx.moveTo(hl,carBottom*0.78);ctx.lineTo(W*0.22,0);ctx.lineTo(W*0.5,0);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(hr,carBottom*0.78);ctx.lineTo(W*0.5,0);ctx.lineTo(W*0.78,0);ctx.closePath();ctx.fill();
+
+    // Car
+    const cw=W*0.28,ch=H*0.42;
+    const cx2=W/2,cy2=H*0.65;
+
+    // Body gradient
+    const bg=ctx.createLinearGradient(cx2-cw/2,0,cx2+cw/2,0);
+    bg.addColorStop(0,'#141820');bg.addColorStop(0.3,'#232b38');bg.addColorStop(0.7,'#232b38');bg.addColorStop(1,'#141820');
+    ctx.fillStyle=bg;rr(ctx,cx2-cw/2,cy2-ch/2,cw,ch,cw*0.16);ctx.fill();
+
+    // Body highlight strip
+    ctx.fillStyle='rgba(255,255,255,0.025)';
+    rr(ctx,cx2-cw/2+3,cy2-ch/2+3,cw-6,ch*0.15,cw*0.1);ctx.fill();
+
+    // Roof
+    const roofG=ctx.createLinearGradient(cx2-cw*0.36,0,cx2+cw*0.36,0);
+    roofG.addColorStop(0,'#0e1420');roofG.addColorStop(0.5,'#1a2130');roofG.addColorStop(1,'#0e1420');
+    ctx.fillStyle=roofG;rr(ctx,cx2-cw*0.36,cy2-ch*0.06,cw*0.72,ch*0.3,cw*0.07);ctx.fill();
+
+    // Front windscreen
+    ctx.fillStyle='rgba(22,34,55,0.85)';rr(ctx,cx2-cw*0.34,cy2-ch*0.48,cw*0.68,ch*0.19,cw*0.06);ctx.fill();
+    ctx.fillStyle='rgba(0,168,204,0.03)';rr(ctx,cx2-cw*0.34,cy2-ch*0.48,cw*0.68,ch*0.19,cw*0.06);ctx.fill();
+
+    // Rear windscreen
+    ctx.fillStyle='rgba(16,24,40,0.7)';rr(ctx,cx2-cw*0.32,cy2+ch*0.22,cw*0.64,ch*0.16,cw*0.05);ctx.fill();
+
+    // Headlights
+    ctx.fillStyle='rgba(0,168,204,0.92)';
+    rr(ctx,cx2-cw*0.49,cy2-ch*0.5,cw*0.17,ch*0.065,2);ctx.fill();
+    rr(ctx,cx2+cw*0.32,cy2-ch*0.5,cw*0.17,ch*0.065,2);ctx.fill();
+    // HL outer glow
+    ctx.fillStyle='rgba(0,168,204,0.12)';
+    rr(ctx,cx2-cw*0.51,cy2-ch*0.52,cw*0.21,ch*0.09,3);ctx.fill();
+    rr(ctx,cx2+cw*0.3,cy2-ch*0.52,cw*0.21,ch*0.09,3);ctx.fill();
+
+    // Tail lights
+    ctx.fillStyle='rgba(180,40,30,0.85)';
+    rr(ctx,cx2-cw*0.48,cy2+ch*0.4,cw*0.15,ch*0.055,2);ctx.fill();
+    rr(ctx,cx2+cw*0.33,cy2+ch*0.4,cw*0.15,ch*0.055,2);ctx.fill();
+
+    // Wheels
+    const wy1=cy2-ch*0.29,wy2=cy2+ch*0.17,ww=cw*0.13,wh=ch*0.16;
+    [[cx2-cw*0.54,wy1],[cx2+cw*0.41,wy1],[cx2-cw*0.54,wy2],[cx2+cw*0.41,wy2]].forEach(([wx,wy])=>{
+      ctx.fillStyle='#0b0e13';rr(ctx,wx,wy,ww,wh,3);ctx.fill();
+      ctx.fillStyle='#1b2028';rr(ctx,wx+2,wy+2,ww-4,wh-4,2);ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();
+    });
+
+    // Door crease
+    ctx.strokeStyle='rgba(0,0,0,0.6)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx2-cw*0.44,cy2+ch*0.05);ctx.lineTo(cx2+cw*0.44,cy2+ch*0.05);ctx.stroke();
+
+    // Preceding car (faint, ahead)
+    const acw=cw*0.6,ach=ch*0.35,acy=H*0.06;
+    const abg=ctx.createLinearGradient(cx2-acw/2,0,cx2+acw/2,0);
+    abg.addColorStop(0,'#0e1218');abg.addColorStop(0.5,'#181e28');abg.addColorStop(1,'#0e1218');
+    ctx.fillStyle=abg;rr(ctx,cx2-acw/2,acy,acw,ach,acw*0.14);ctx.fill();
+    ctx.fillStyle='rgba(180,40,30,0.5)';
+    rr(ctx,cx2-acw*0.44,acy+ach*0.85,acw*0.14,ach*0.09,2);ctx.fill();
+    rr(ctx,cx2+acw*0.3,acy+ach*0.85,acw*0.14,ach*0.09,2);ctx.fill();
+  }
+
+  (function loop(){draw();requestAnimationFrame(loop)})();
+  window._setSpd=s=>{curSpd=s};
+})();
+
+// Map canvas
+(function(){
+  const cv=document.getElementById('mapCanvas');
+  const parent=document.getElementById('centre');
+  function resize(){cv.width=parent.offsetWidth;cv.height=110}
+  resize();window.addEventListener('resize',resize);
+  const ctx=cv.getContext('2d');
+  let off=0;
+  (function loop(){
+    const W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#05070a';ctx.fillRect(0,0,W,H);
+    // grid
+    ctx.strokeStyle='rgba(0,168,204,0.05)';ctx.lineWidth=1;
+    const gs=50;
+    for(let x=(off%gs)-gs;x<W+gs;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+    for(let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+    // road
+    ctx.strokeStyle='rgba(0,168,204,0.18)';ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(0,H*0.6);ctx.bezierCurveTo(W*0.3,H*0.4,W*0.65,H*0.72,W,H*0.52);ctx.stroke();
+    ctx.strokeStyle='rgba(0,168,204,0.08)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(0,H*0.2);ctx.lineTo(W*0.4,H*0.48);ctx.lineTo(W,H*0.28);ctx.stroke();
+    // dot
+    const t=(Date.now()/30)%W;
+    const ty=H*0.6+Math.sin(t/90)*H*0.1;
+    ctx.fillStyle='rgba(0,168,204,0.2)';ctx.beginPath();ctx.arc(t,ty,9,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#00a8cc';ctx.beginPath();ctx.arc(t,ty,4,0,Math.PI*2);ctx.fill();
+    // compass
+    ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='10px "Share Tech Mono"';ctx.textAlign='right';
+    ctx.fillText('N↑',W-8,16);
+    off+=0.7;requestAnimationFrame(loop);
+  })();
+})();
 
 // GPS
-let _lt=null;
+let lastPos=null,tripM=0,totalM=0,spds=[],topSpd=0,driveStart=null;
+function haversine(la1,lo1,la2,lo2){
+  const R=3958.8,r=d=>d*Math.PI/180;
+  const a=Math.sin(r(la2-la1)/2)**2+Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(r(lo2-lo1)/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
 function onGPS(pos){
-  const{latitude:lat,longitude:lon,speed}=pos.coords;const now=Date.now();
-  let mph=0;
-  if(speed!=null&&speed>=0)mph=speed*2.23694;
-  else if(S.lastLat!==null&&_lt!==null){const dt=(now-_lt)/3600000;if(dt>0&&dt<0.02)mph=hav(S.lastLat,S.lastLon,lat,lon)/dt;}
-  _lt=now;S.prevSpd=S.targetSpd;S.targetSpd=Math.max(0,Math.round(mph));S.dispSpd=S.targetSpd;showSpd(S.targetSpd);
-  S.lat=lat;S.lon=lon;if(!S.tempFetched){fetchTemp(lat,lon);S.tempFetched=true;}
-  if(S.lastLat!==null){const d=hav(S.lastLat,S.lastLon,lat,lon);if(d>=0&&d<0.5){S.trip+=d;if(S.odo!==null)S.odo+=d;}}
-  S.lastLat=lat;S.lastLon=lon;refreshUI();
+  const{latitude:lat,longitude:lon,speed}=pos.coords;
+  const mph=speed!=null?speed*2.23694:0;
+  if(!driveStart)driveStart=Date.now();
+  document.getElementById('gpsPill').textContent='LIVE';
+  const spd=Math.round(mph);
+  document.getElementById('spdNum').textContent=spd;
+  if(window._setSpd)window._setSpd(spd);
+  spds.push(spd);if(spds.length>120)spds.shift();
+  if(spd>topSpd){topSpd=spd;document.getElementById('topVal').textContent=spd}
+  document.getElementById('avgVal').textContent=Math.round(spds.reduce((a,b)=>a+b,0)/spds.length);
+  if(lastPos){const d=haversine(lastPos.lat,lastPos.lon,lat,lon);if(d<0.5){tripM+=d;totalM+=d}}
+  lastPos={lat,lon};
+  document.getElementById('tripVal').textContent=tripM.toFixed(1);
+  document.getElementById('totalMi').textContent=totalM.toFixed(1);
+  document.getElementById('locCoords').textContent='LAT '+lat.toFixed(5)+'  LON '+lon.toFixed(5);
+  document.getElementById('locAddr').textContent='GPS Active';
 }
-function refreshUI(){const tv=document.getElementById('tripVal');if(tv)tv.textContent=S.trip.toFixed(1)+' mi';const ov=document.getElementById('odoVal');if(S.odo!==null&&ov)ov.textContent=Math.round(S.odo)+' mi';}
-
-// Demo
-let demoI=null,demoP=0,demoOn=false;
-function startDemo(){if(demoI)return;demoOn=true;S.lat=51.5074;S.lon=-0.1278;S.lastLat=S.lat;S.lastLon=S.lon;fetchTemp(S.lat,S.lon);document.getElementById('demoBtn').classList.add('active');demoI=setInterval(()=>{demoP+=0.04;S.prevSpd=S.targetSpd;S.targetSpd=Math.max(0,Math.round(45+30*Math.sin(demoP)));S.dispSpd=S.targetSpd;showSpd(S.targetSpd);const d=S.targetSpd/3600/60;S.trip+=d;if(S.odo!==null)S.odo+=d;refreshUI();},1000);}
-function stopDemo(){if(demoI){clearInterval(demoI);demoI=null;}demoOn=false;S.targetSpd=0;S.dispSpd=0;showSpd(0);document.getElementById('demoBtn').classList.remove('active');}
-function toggleDemo(){if(demoOn)stopDemo();else startDemo();}
-
-function openModal(t){document.getElementById(t+'Modal').classList.add('open');}
-function closeModal(t){document.getElementById(t+'Modal').classList.remove('open');}
-function confirmOdo(){const v=parseFloat(document.getElementById('odoInp').value);if(!isNaN(v)&&v>=0){S.odo=v;refreshUI();}closeModal('odo');}
-function resetTrip(){S.trip=0;refreshUI();}
-function toggleTheme(){document.body.classList.toggle('dark');document.body.classList.toggle('light',!document.body.classList.contains('dark'));}
-let fsOn=false;
-function toggleFS(){if(!fsOn)(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);else(document.exitFullscreen||document.webkitExitFullscreen).call(document);fsOn=!fsOn;}
-document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)fsOn=false;});
-
-// ── SPOTIFY PKCE ──
-async function sha256(v){const e=new TextEncoder().encode(v);const h=await crypto.subtle.digest('SHA-256',e);return btoa(String.fromCharCode(...new Uint8Array(h))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
-function rnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');}
-
-async function spotifyLogin(){
-  const t=localStorage.getItem('sp_tok'),e=localStorage.getItem('sp_tok_exp');
-  if(t&&e&&Date.now()<parseInt(e)){S.spotToken=t;initSpot();return;}
-  const v=rnd(32),c=await sha256(v);localStorage.setItem('sp_v',v);
-  const u=new URL('https://accounts.spotify.com/authorize');
-  u.searchParams.set('client_id',SPOT_CLIENT);u.searchParams.set('response_type','code');
-  u.searchParams.set('redirect_uri',SPOT_REDIRECT);u.searchParams.set('scope',SPOT_SCOPES);
-  u.searchParams.set('code_challenge_method','S256');u.searchParams.set('code_challenge',c);
-  location.href=u.toString();
+function demoMode(){
+  driveStart=Date.now();
+  document.getElementById('locAddr').textContent='Demo Mode — Grant location for live data';
+  let ph=0;
+  setInterval(()=>{
+    ph+=0.04;
+    const spd=Math.max(0,Math.round(40+28*Math.sin(ph)));
+    document.getElementById('spdNum').textContent=spd;
+    if(window._setSpd)window._setSpd(spd);
+    spds.push(spd);if(spds.length>60)spds.shift();
+    if(spd>topSpd){topSpd=spd;document.getElementById('topVal').textContent=spd}
+    document.getElementById('avgVal').textContent=Math.round(spds.reduce((a,b)=>a+b,0)/spds.length);
+    tripM+=spd/3600;totalM+=spd/3600;
+    document.getElementById('tripVal').textContent=tripM.toFixed(1);
+    document.getElementById('totalMi').textContent=totalM.toFixed(1);
+  },1000);
 }
-
-async function handleCb(code){
-  const v=localStorage.getItem('sp_v');if(!v)return;
-  try{
-    const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:SPOT_REDIRECT,client_id:SPOT_CLIENT,code_verifier:v})});
-    const d=await r.json();
-    if(d.access_token){
-      localStorage.setItem('sp_tok',d.access_token);
-      localStorage.setItem('sp_tok_exp',Date.now()+d.expires_in*1000);
-      if(d.refresh_token)localStorage.setItem('sp_ref',d.refresh_token);
-      localStorage.removeItem('sp_v');
-      history.replaceState({},document.title,location.pathname);
-      S.spotToken=d.access_token;initSpot();
-    }
-  }catch(e){console.error('Spotify auth error',e);}
-}
-
-function initSpot(){
-  document.getElementById('spotLogin').style.display='none';
-  const p=document.getElementById('spotPlayer');p.style.display='flex';p.style.flexDirection='column';p.style.height='100%';
-  pollSpot();loadTopTracks();
-  setInterval(pollSpot,3000);
-  setInterval(()=>{if(S.spotPlaying&&S.spotDur>0){S.spotPos=Math.min(S.spotPos+1000,S.spotDur);updProg();}},1000);
-}
-
-async function spFetch(ep,method='GET',body=null){
-  const opts={method,headers:{'Authorization':'Bearer '+S.spotToken,'Content-Type':'application/json'}};
-  if(body)opts.body=JSON.stringify(body);
-  try{const r=await fetch('https://api.spotify.com/v1'+ep,opts);if(r.status===204||r.status===202)return null;if(!r.ok)return null;return await r.json();}catch{return null;}
-}
-
-function fmtMs(ms){if(!ms)return'0:00';const s=Math.floor(ms/1000),m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
-
-let _lastTrackId=null;
-async function pollSpot(){
-  const d=await spFetch('/me/player');if(!d)return;
-  S.spotPlaying=d.is_playing;S.spotDur=d.item?.duration_ms||0;S.spotPos=d.progress_ms||0;
-  const it=d.item;
-  if(it){
-    document.getElementById('spTrack').textContent=it.name||'--';
-    document.getElementById('spArtist').textContent=it.artists?.map(a=>a.name).join(', ')||'--';
-    const art=it.album?.images?.[0]?.url;
-    if(art){document.getElementById('spArt').src=art;document.getElementById('fspArt').src=art;}
-    document.getElementById('fspTrack').textContent=it.name||'--';
-    document.getElementById('fspArtist').textContent=it.artists?.map(a=>a.name).join(', ')||'--';
-    // Load queue when track changes
-    if(it.id!==_lastTrackId){_lastTrackId=it.id;loadQueue();}
-  }
-  updProg();
-  const pi=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';
-  document.getElementById('spPlayIco').innerHTML=pi;
-  document.getElementById('fspPlayIco').innerHTML=pi;
-}
-
-function updProg(){
-  const pct=S.spotDur>0?S.spotPos/S.spotDur*100:0;
-  ['spProgFill','fspProgFill'].forEach(id=>{const f=document.getElementById(id);if(f)f.style.width=pct+'%';});
-  document.getElementById('spPos').textContent=fmtMs(S.spotPos);
-  document.getElementById('spDur').textContent=fmtMs(S.spotDur);
-  document.getElementById('fspPos').textContent=fmtMs(S.spotPos);
-  document.getElementById('fspDur').textContent=fmtMs(S.spotDur);
-}
-
-async function spToggle(){await spFetch(S.spotPlaying?'/me/player/pause':'/me/player/play','PUT');S.spotPlaying=!S.spotPlaying;const pi=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';document.getElementById('spPlayIco').innerHTML=pi;document.getElementById('fspPlayIco').innerHTML=pi;}
-async function spNext(){await spFetch('/me/player/next','POST');setTimeout(pollSpot,600);}
-async function spPrev(){await spFetch('/me/player/previous','POST');setTimeout(pollSpot,600);}
-
-function renderGrid(items,type){
-  const c=document.getElementById('spContent');c.innerHTML='';
-  if(!items||!items.length){c.innerHTML='<div class="sp-empty">No results found</div>';return;}
-  const title=document.createElement('div');title.className='sp-section-title';
-  const list=document.createElement('div');list.className='sp-list';
-  items.forEach(it=>{
-    const track=type==='track'?it:it.track||it;if(!track||!track.name)return;
-    const dur=track.duration_ms?fmtMs(track.duration_ms):'';
-    const art=track.album?.images?.[1]?.url||track.album?.images?.[0]?.url||'';
-    const div=document.createElement('div');div.className='sp-list-item';
-    div.innerHTML=`<img src="${art}" alt=""><div class="sp-list-info"><div class="sp-list-name">${track.name}</div><div class="sp-list-sub">${track.artists?.map(a=>a.name).join(', ')||''}</div></div><div class="sp-list-dur">${dur}</div>`;
-    div.onclick=()=>playTrack(track.uri);
-    list.appendChild(div);
+setInterval(()=>{
+  if(!driveStart)return;
+  const e=Date.now()-driveStart;
+  document.getElementById('driveTime').textContent=String(Math.floor(e/60000)).padStart(2,'0')+':'+String(Math.floor((e%60000)/1000)).padStart(2,'0');
+},1000);
+if('geolocation' in navigator){
+  navigator.geolocation.watchPosition(onGPS,()=>demoMode(),{enableHighAccuracy:true,maximumAge:1000,timeout:8000});
+}else{demoMode()}
+if('DeviceMotionEvent' in window){
+  window.addEventListener('devicemotion',e=>{
+    const a=e.acceleration;
+    if(a){document.getElementById('gForce').textContent=(Math.sqrt((a.x||0)**2+(a.y||0)**2+(a.z||0)**2)/9.81).toFixed(1)}
   });
-  c.appendChild(title);c.appendChild(list);
-  return title;
 }
-
-async function loadTopTracks(){
-  const d=await spFetch('/me/top/tracks?limit=30&time_range=medium_term');
-  const t=renderGrid(d?.items||[],'track');
-  if(t)t.textContent='Your Top Tracks';
-}
-
-async function spSearch(){
-  const q=document.getElementById('spSearchInp').value.trim();if(!q){loadTopTracks();return;}
-  const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track,artist&limit=25');
-  const items=d?.tracks?.items||[];
-  const t=renderGrid(items,'track');
-  if(t)t.textContent='Results for "'+q+'"';
-}
-
-async function loadQueue(){
-  const d=await spFetch('/me/player/queue');
-  // Deduplicate by track id
-  const seen=new Set();
-  const items=(d?.queue||[]).filter(it=>{
-    if(!it?.id||seen.has(it.id))return false;
-    seen.add(it.id);return true;
-  }).slice(0,25);
-  if(!items.length){loadTopTracks();return;}
-  const c=document.getElementById('spContent');c.innerHTML='';
-  const title=document.createElement('div');title.className='sp-section-title';title.textContent='UP NEXT';
-  const list=document.createElement('div');list.className='sp-list';
-  items.forEach(it=>{
-    if(!it?.name)return;
-    const art=it.album?.images?.[1]?.url||it.album?.images?.[0]?.url||'';
-    const div=document.createElement('div');div.className='sp-list-item';
-    div.innerHTML='<img src="'+art+'" alt=""><div class="sp-list-info"><div class="sp-list-name">'+it.name+'</div><div class="sp-list-sub">'+(it.artists?.map(a=>a.name).join(', ')||'')+'</div></div><div class="sp-list-dur">'+fmtMs(it.duration_ms)+'</div>';
-    div.onclick=(e)=>{e.stopPropagation();playTrack(it.uri);};
-    list.appendChild(div);
-  });
-  c.appendChild(title);c.appendChild(list);
-}
-
-function toggleFsNow(){
-  const fs=document.getElementById('spFullscreen');
-  fs.classList.toggle('open');
-}
-
-function seekSpot(e,bar){
-  const pct=e.offsetX/bar.offsetWidth;
-  if(S.spotDur>0)spFetch('/me/player/seek?position_ms='+Math.round(pct*S.spotDur),'PUT');
-}
-
-async function playTrack(uri){
-  await spFetch('/me/player/play','PUT',{uris:[uri]});
-  setTimeout(pollSpot,600);
-}
-
-// Canvas
-const cv=document.getElementById('roadCanvas'),ctx=cv.getContext('2d');
-let laneOff=0,dotOff=0,fogR=30,fogG=200,fogB=80,fogA=0,glideT=0,nightImg=null;
-function getNightImg(){if(nightImg)return nightImg;const blob=new Blob([`<svg width="339" height="245" viewBox="0 0 339 245" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g filter="url(#filter0_f_3_77)">
-<ellipse cx="169.5" cy="199" rx="65.5" ry="26" fill="black"/>
-</g>
-<g filter="url(#filter1_f_3_77)">
-<path d="M319 62.5C319 62.5 252.067 105 169.5 105C86.9334 105 20 62.5 20 62.5C20 39.0279 86.9334 20 169.5 20C252.067 20 319 39.0279 319 62.5Z" fill="url(#paint0_linear_3_77)" fill-opacity="0.4"/>
-</g>
-<g filter="url(#filter2_f_3_77)">
-<path d="M254 81.5C254 95.5833 216.168 107 169.5 107C122.832 107 85 95.5833 85 81.5C85 67.4167 122.832 68 169.5 68C216.168 68 254 67.4167 254 81.5Z" fill="white" fill-opacity="0.3"/>
-</g>
-<path d="M124 212C120.8 212.4 119.333 214.167 119 215H109.5C106.833 212.167 101.5 203.7 101.5 192.5C101.5 178.5 101.5 170 103.5 167C105.5 164 111.5 143 112.5 132.5C113.5 122 115.5 99.5 118 95C120.5 90.5 123.5 86.5 128 85C132.5 83.5 135.5 83.5 137.5 83.5C139.1 83.5 141.167 85.1667 142 86C147.5 85.6667 161.4 85 169 85H169.5C177.1 85 191 85.6667 196.5 86C197.333 85.1667 199.4 83.5 201 83.5C203 83.5 206 83.5 210.5 85C215 86.5 218 90.5 220.5 95C223 99.5 225 122 226 132.5C227 143 233 164 235 167C237 170 237 178.5 237 192.5C237 203.7 231.667 212.167 229 215H219.5C219.167 214.167 217.7 212.4 214.5 212C210.5 211.5 176.5 211 169.5 211H169C162 211 128 211.5 124 212Z" fill="#F7F7F7"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M108.086 153.619C112.579 152.69 118.854 150.097 120.5 144.5C121.153 142.281 121.669 139.55 122.218 136.647C123.772 128.429 125.589 118.825 131.5 115.5H205.5C211.411 118.825 213.228 128.429 214.782 136.647C215.331 139.55 215.847 142.281 216.5 144.5C218.35 150.79 226.046 153.287 230.488 153.89C228.48 146.65 226.532 138.088 226 132.5L225.818 130.579C224.769 119.476 222.856 99.2417 220.5 95C218 90.5 215 86.5 210.5 85C206 83.5 203 83.5 201 83.5C199.4 83.5 197.333 85.1667 196.5 86C191 85.6667 177.1 85 169.5 85H169C161.4 85 147.5 85.6667 142 86C141.167 85.1667 139.1 83.5 137.5 83.5C135.5 83.5 132.5 83.5 128 85C123.5 86.5 120.5 90.5 118 95C115.644 99.2417 113.731 119.476 112.682 130.579L112.5 132.5C111.975 138.018 110.068 146.437 108.086 153.619Z" fill="white"/>
-<path d="M126.096 92.2686C126.189 92.3072 126.25 92.3989 126.25 92.5V129.5C126.25 131.054 125.733 132.478 125.019 133.517C124.661 134.036 124.251 134.465 123.824 134.767C123.399 135.067 122.943 135.25 122.5 135.25C122.034 135.25 121.506 134.983 120.991 134.493C120.471 133.998 119.939 133.252 119.461 132.231C118.504 130.19 117.75 127.026 117.75 122.5C117.75 117.978 118.503 111.708 119.882 105.941C120.571 103.058 121.419 100.294 122.41 97.9346C123.4 95.5789 124.54 93.6068 125.823 92.3232C125.895 92.2518 126.002 92.2299 126.096 92.2686Z" fill="#252525" stroke="#A3A3A3" stroke-width="0.5" stroke-linejoin="round"/>
-<path d="M129 139V91.5C132.333 90 143.2 87 160 87H176C192.8 87 203.667 90 207 91.5V139C207 146.5 200.5 153 181 153H155C135.5 153 129 146.5 129 139Z" fill="#545454"/>
-<path d="M129 139V91.5C132.333 90 143.2 87 160 87H176C192.8 87 203.667 90 207 91.5V139C207 146.5 200.5 153 181 153H155C135.5 153 129 146.5 129 139Z" fill="url(#paint1_radial_3_77)"/>
-<g filter="url(#filter3_f_3_77)">
-<rect x="139" y="88" width="58" height="13" fill="url(#paint2_radial_3_77)" fill-opacity="0.3"/>
-</g>
-<path d="M210.404 92.2686C210.311 92.3072 210.25 92.3989 210.25 92.5V129.5C210.25 131.054 210.767 132.478 211.481 133.517C211.839 134.036 212.249 134.465 212.676 134.767C213.101 135.067 213.557 135.25 214 135.25C214.466 135.25 214.994 134.983 215.509 134.493C216.029 133.998 216.561 133.252 217.039 132.231C217.996 130.19 218.75 127.026 218.75 122.5C218.75 117.978 217.997 111.708 216.618 105.941C215.929 103.058 215.081 100.294 214.09 97.9346C213.1 95.5789 211.96 93.6068 210.677 92.3232C210.605 92.2518 210.498 92.2299 210.404 92.2686Z" fill="#252525" stroke="#A3A3A3" stroke-width="0.5" stroke-linejoin="round"/>
-<path d="M130.5 111C134.333 109 147.1 105 167.5 105C187.9 105 201 109 205 111" stroke="black" stroke-opacity="0.4" stroke-linecap="round" stroke-linejoin="round"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M129 136V139C129 146.5 135.5 153 155 153H181C200.5 153 207 146.5 207 139V136C207 143.5 200.5 150 181 150H155C135.5 150 129 143.5 129 136Z" fill="#F2F2F2" fill-opacity="0.1"/>
-<rect x="154.5" y="149" width="26" height="2" fill="#D0021B" fill-opacity="0.4"/>
-<path d="M131.5 166C135.19 166 137.731 169.985 138.947 172.942C139.233 173.638 138.615 174.331 137.872 174.215C135.763 173.884 132.536 173.5 129.5 173.5C114.5 173.5 124 176 116.5 176C114 176 108 176 108 171C108 167.672 109.154 164.806 110.021 163.264C110.273 162.817 110.838 162.693 111.299 162.919C112.848 163.679 115.697 164.839 119 165.5C124 166.5 126 166 131.5 166Z" fill="#6D0000"/>
-<g filter="url(#filter4_f_3_77)">
-<path d="M136 172.5C135.666 171 134.3 167.9 131.5 167.5C128 167 122 168 119 167C116 166 113.5 165.499 111 166.5C108.5 167.5 109 173.333 113 174C117 174.667 118.666 173.667 120.5 173.5M120 171.5C120.166 171.333 120.1 170.9 118.5 170.5C116.5 170 115.5 171 114.5 170.5C113.7 170.1 114.166 169.333 114.5 169" stroke="#FB4E4E" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
-<path d="M205 166C201.31 166 198.769 169.985 197.553 172.942C197.267 173.638 197.885 174.331 198.628 174.215C200.737 173.884 203.964 173.5 207 173.5C222 173.5 212.5 176 220 176C222.5 176 228.5 176 228.5 171C228.5 167.672 227.346 164.806 226.479 163.264C226.227 162.817 225.662 162.693 225.201 162.919C223.652 163.679 220.803 164.839 217.5 165.5C212.5 166.5 210.5 166 205 166Z" fill="#6D0000"/>
-<g filter="url(#filter5_f_3_77)">
-<path d="M200.5 172.5C200.834 171 202.2 167.9 205 167.5C208.5 167 214.5 168 217.5 167C220.5 166 223 165.499 225.5 166.5C228 167.5 227.5 173.333 223.5 174C219.5 174.667 217.834 173.667 216 173.5M216.5 171.5C216.334 171.333 216.4 170.9 218 170.5C220 170 221 171 222 170.5C222.8 170.1 222.334 169.333 222 169" stroke="#FB4E4E" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
-<path d="M123 166C123.167 173.5 125.3 188.5 132.5 188.5H204C211.2 188.5 213.333 173.5 213.5 166" stroke="black" stroke-opacity="0.4"/>
-<g filter="url(#filter6_f_3_77)">
-<path d="M169.447 176C123.858 176 116.159 151.523 118.009 139.285L117 106.649L150.284 88L214.834 96.1589L222.903 139.285C224.08 151.523 215.036 176 169.447 176Z" fill="black" fill-opacity="0.1"/>
-</g>
-<rect x="157.5" y="176.5" width="23" height="10" rx="0.5" fill="#E9E9E9" stroke="#CCCCCC"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M172.776 166.091C171.442 165.581 170.139 165.418 169 165.426C167.861 165.418 166.558 165.581 165.224 166.091C165.065 165.838 165 165.685 165 165.685C166.458 165.178 167.824 165.004 169 165C170.176 165.004 171.542 165.178 173 165.685C173 165.685 172.954 165.81 172.776 166.091ZM170.12 166.469L169 172L167.872 166.468C166.812 166.469 166.477 166.572 166.428 166.991C166.428 166.991 165.712 166.757 165.351 166.281C166.759 165.707 168.175 165.681 168.175 165.681L168.999 166.565L169.824 165.681C169.824 165.681 171.24 165.707 172.648 166.281C172.287 166.757 171.571 166.991 171.571 166.991C171.523 166.572 171.187 166.469 170.12 166.469Z" fill="#888585"/>
-<path d="M169 161C153.8 161 140.333 162.333 135.5 163H203C198 162.333 184.2 161 169 161Z" fill="black" fill-opacity="0.1"/>
-<path d="M169 177C153.8 177 140.333 175.667 135.5 175H203C198 175.667 184.2 177 169 177Z" fill="#C9C9C9"/>
-<path d="M134 205L130.5 208.5C128.5 207.7 117.333 208.167 112 208.5C112 208.5 114.4 207.2 120 206C125.6 204.8 131.667 204.833 134 205Z" fill="#510000"/>
-<path d="M203 205L206.5 208.5C208.5 207.7 219.667 208.167 225 208.5C225 208.5 222.6 207.2 217 206C211.4 204.8 205.333 204.833 203 205Z" fill="#510000"/>
-<path d="M117 164.5H218" stroke="white"/>
-<path d="M114 105H116.5V108H114C114 110 111.5 111.5 107.5 111.5C103 111.5 100 111 100 108C100 103.5 108 101 111 101C113.4 101 114 103.667 114 105Z" fill="white"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M111.42 110.881C110.378 111.274 109.052 111.5 107.5 111.5C103.876 111.5 101.225 111.176 100.33 109.483C101.746 107.148 107.325 104.5 109.5 104.5C112 104.5 112.5 106.5 112.5 108C112.5 108.915 111.918 110.083 111.42 110.881Z" fill="#A8A5A5"/>
-<path d="M224.5 105H222V108H224.5C224.5 110 227 111.5 231 111.5C235.5 111.5 238.5 111 238.5 108C238.5 103.5 230.5 101 227.5 101C225.1 101 224.5 103.667 224.5 105Z" fill="white"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M238.17 109.483C236.755 107.148 231.175 104.5 229 104.5C226.5 104.5 226 106.5 226 108C226 108.915 226.582 110.083 227.08 110.881C228.122 111.274 229.448 111.5 231 111.5C234.624 111.5 237.275 111.176 238.17 109.483Z" fill="#A8A5A5"/>
-<g filter="url(#filter7_f_3_77)">
-<rect x="118" y="185" width="100" height="14" rx="7" fill="black" fill-opacity="0.1"/>
-</g>
-<defs>
-<filter id="filter0_f_3_77" x="84" y="153" width="171" height="92" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-<feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur_3_77"/>
-</filter>
-<filter id="filter1_f_3_77" x="0" y="0" width="339" height="125" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-<feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur_3_77"/>
-</filter>
-<filter id="filter2_f_3_77" x="65" y="47.9966" width="209" height="79.0034" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-<feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur_3_77"/>
-</filter>
-<filter id="filter3_f_3_77" x="137" y="86" width="62" height="17" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-<feGaussianBlur stdDeviation="1" result="effect1_foregroundBlur_3_77"/>
-</filter>
-<filter id="filter4_f_3_77" x="107.979" y="164.455" width="29.5215" height="11.2686" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-<feGaussianBlur stdDeviation="0.5" result="effect1_foregroundBlur_3_77"/>
-</filter>
-<filter id="filter5_f_3_77" x="199" y="164.455" width="29.5215" height="11.2686" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-<feGaussianBlur stdDeviation="0.5" result="effect1_foregroundBlur_3_77"/>
-</filter>
-<filter id="filter6_f_3_77" x="113" y="84" width="114" height="96" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-<feGaussianBlur stdDeviation="2" result="effect1_foregroundBlur_3_77"/>
-</filter>
-<filter id="filter7_f_3_77" x="114" y="181" width="108" height="22" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-<feGaussianBlur stdDeviation="2" result="effect1_foregroundBlur_3_77"/>
-</filter>
-<linearGradient id="paint0_linear_3_77" x1="168.956" y1="31.4423" x2="169.502" y2="105" gradientUnits="userSpaceOnUse">
-<stop offset="0.00552486" stop-color="white" stop-opacity="0.2"/>
-<stop offset="1" stop-color="white"/>
-</linearGradient>
-<radialGradient id="paint1_radial_3_77" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(167.5 116) rotate(90) scale(48.5 139.214)">
-<stop stop-opacity="0"/>
-<stop offset="1"/>
-</radialGradient>
-<radialGradient id="paint2_radial_3_77" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(168 95.0417) rotate(90) scale(5.95833 34.731)">
-<stop stop-color="white"/>
-<stop offset="0.98895" stop-color="white" stop-opacity="0"/>
-</radialGradient>
-</defs>
-</svg>`],{type:'image/svg+xml'});nightImg=new Image();nightImg.src=URL.createObjectURL(blob);return nightImg;}
-function resizeCv(){const w=document.getElementById('roadWrap');cv.width=w.offsetWidth;cv.height=w.offsetHeight;}
-function renderRoad(){
-  const W=cv.width,H=cv.height;if(!W||!H){requestAnimationFrame(renderRoad);return;}
-  const dark=document.body.classList.contains('dark');
-  ctx.clearRect(0,0,W,H);const spd=S.dispSpd;
-  const accel=(S.targetSpd-S.prevSpd)>5,danger=spd>70||accel;
-  if(accel){fogA=0.85;fogR=220;fogG=20;fogB=20;}
-  else if(danger){fogA+=(0.55-fogA)*0.12;fogR+=(220-fogR)*0.15;fogG+=(20-fogG)*0.15;fogB+=(20-fogB)*0.15;}
-  else if(spd>4){fogA+=(0.18-fogA)*0.05;fogR+=(30-fogR)*0.06;fogG+=(200-fogG)*0.06;fogB+=(80-fogB)*0.06;}
-  else{fogA+=(0-fogA)*0.05;}
-  const r=Math.round(fogR),g=Math.round(fogG),b=Math.round(fogB);
-  const cl=document.getElementById('cluster');
-  if(cl){if(fogA>0.01)cl.style.background=`linear-gradient(to bottom,rgba(${r},${g},${b},${(fogA*0.45).toFixed(3)}) 0%,rgba(${r},${g},${b},${(fogA*0.25).toFixed(3)}) 40%,rgba(${r},${g},${b},0.02) 100%)`;else cl.style.background=dark?'#111':'#ebebeb';}
-  if(fogA>0.005){const fg=ctx.createRadialGradient(W/2,H*0.65,0,W/2,H*0.65,H*0.6);fg.addColorStop(0,`rgba(${r},${g},${b},${(fogA*0.6).toFixed(3)})`);fg.addColorStop(1,`rgba(${r},${g},${b},0)`);ctx.fillStyle=fg;ctx.fillRect(0,0,W,H);}
-  const ltx=W*0.36,lbx=W*0.04,rtx=W*0.64,rbx=W*0.96,ty=H*0.08,by=H;
-  if(spd>0)laneOff=(laneOff+spd*0.0008)%1.0;
-  for(let i=0;i<32;i++){const t=((i/32)+laneOff)%1.0,t2=(((i+1)/32)+laneOff)%1.0;const lx1=ltx+(lbx-ltx)*t,ly1=ty+(by-ty)*t,lx2=ltx+(lbx-ltx)*t2,ly2=ty+(by-ty)*t2;const rx1=rtx+(rbx-rtx)*t,ry1=ty+(by-ty)*t,rx2=rtx+(rbx-rtx)*t2,ry2=ty+(by-ty)*t2;const op=Math.pow(t,0.5)*0.88,lw=0.6+t*2.8;ctx.strokeStyle=`rgba(33,150,243,${op})`;ctx.lineWidth=lw;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(lx1,ly1);ctx.lineTo(lx2,ly2);ctx.stroke();ctx.beginPath();ctx.moveTo(rx1,ry1);ctx.lineTo(rx2,ry2);ctx.stroke();}
-  if(spd>0)dotOff=(dotOff+spd*0.08)%60;
-  ctx.setLineDash([18,14]);ctx.lineDashOffset=-dotOff;ctx.strokeStyle=dark?'rgba(255,255,255,0.18)':'rgba(0,0,0,0.2)';ctx.lineWidth=2;ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(W/2,ty);ctx.lineTo(W/2,by);ctx.stroke();ctx.setLineDash([]);
-  const carW=W*0.58,ni=getNightImg();
-  if(ni.complete&&ni.naturalWidth>0){const ch=carW*(ni.naturalHeight/ni.naturalWidth);const cx2=(W-carW)/2,baseY=H-ch-H*0.02;if(spd>2){glideT+=0.0012;const bobY=-Math.abs(Math.sin(glideT))*6,swayX=Math.sin(glideT*0.35)*3;ctx.drawImage(ni,cx2+swayX,baseY+bobY,carW,ch);}else ctx.drawImage(ni,cx2,baseY,carW,ch);}
-  requestAnimationFrame(renderRoad);
-}
-
-window.addEventListener('load',()=>{
-  resizeCv();window.addEventListener('resize',resizeCv);
-  renderRoad();refreshUI();
-  const _sp=new URLSearchParams(window.location.search);
-  if(_sp.get('code')){handleCb(_sp.get('code'));}
-  else{const t=localStorage.getItem('sp_tok'),e=localStorage.getItem('sp_tok_exp');if(t&&e&&Date.now()<parseInt(e)){S.spotToken=t;initSpot();}}
-  if(location.search.includes('demo'))startDemo();
-  else if('geolocation' in navigator){
-    navigator.geolocation.getCurrentPosition(pos=>{onGPS(pos);navigator.geolocation.watchPosition(onGPS,err=>console.warn('GPS:',err.message),{enableHighAccuracy:true,maximumAge:2000,timeout:15000});},err=>console.warn('GPS denied:',err.message),{enableHighAccuracy:true,timeout:20000});
-  }
-});
 </script>
 </body>
 </html>

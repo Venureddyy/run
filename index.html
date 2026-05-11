@@ -644,16 +644,16 @@ function renderTrackList(items,title,backLabel,backFn,contextUri){
   c.appendChild(hdr);
   // Track grid
   const grid=document.createElement('div');
-  grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;';
+  grid.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:6px;';
   items.forEach((it,idx)=>{
     if(!it?.name)return;
-    const art=it.album?.images?.[0]?.url||it.album?.images?.[1]?.url||'';
+    const art=it.album?.images?.[1]?.url||it.album?.images?.[0]?.url||'';
     const div=document.createElement('div');
-    div.style.cssText='cursor:pointer;display:flex;flex-direction:column;background:var(--sp-card);border-radius:6px;overflow:hidden;';
+    div.style.cssText='cursor:pointer;display:flex;flex-direction:column;background:var(--sp-card);border-radius:4px;overflow:hidden;';
     div.innerHTML='<img src="'+art+'" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;background:var(--btn-bg);">'
-      +'<div style="padding:6px 8px;">'
-      +'<div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+it.name+'</div>'
-      +'<div style="font-size:10px;color:var(--subtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">'+(it.artists?.map(a=>a.name).join(', ')||'')+'</div>'
+      +'<div style="padding:4px 6px 5px;">'
+      +'<div style="font-size:10px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+it.name+'</div>'
+      +'<div style="font-size:9px;color:var(--subtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;">'+(it.artists?.map(a=>a.name).join(', ')||'')+'</div>'
       +'</div>';
     const td={name:it.name,artist:it.artists?.map(a=>a.name).join(', ')||'',art};
     div.onclick=(e)=>{

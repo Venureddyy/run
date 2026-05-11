@@ -427,16 +427,72 @@ function renderGrid(items,type){
 }
 
 async function loadTopTracks(){
-  const d=await spFetch('/me/top/tracks?limit=30&time_range=medium_term');
-  const t=renderGrid(d?.items||[],'track');
-  if(t)t.textContent='Your Top Tracks';
+  // Load user's playlists first
+  const d=await spFetch('/me/playlists?limit=50');
+  const items=d?.items||[];
+  const c=document.getElementById('spContent');c.innerHTML='';
+  if(!items.length){
+    // fallback to top tracks
+    const t=await spFetch('/me/top/tracks?limit=50&time_range=medium_term');
+    renderTrackList(t?.items||[],'Your Top Tracks');return;
+  }
+  const title=document.createElement('div');title.className='sp-section-title';
+  title.textContent='YOUR PLAYLISTS';
+  const list=document.createElement('div');list.className='sp-list';
+  items.forEach(pl=>{
+    if(!pl?.name)return;
+    const art=pl.images?.[0]?.url||'';
+    const div=document.createElement('div');div.className='sp-list-item';
+    div.innerHTML='<img src="'+art+'" alt=""><div class="sp-list-info"><div class="sp-list-name">'+pl.name+'</div><div class="sp-list-sub">'+(pl.tracks?.total||0)+' songs</div></div>';
+    div.onclick=()=>loadPlaylistTracks(pl.id, pl.name);
+    list.appendChild(div);
+  });
+  c.appendChild(title);c.appendChild(list);
+}
+
+async function loadPlaylistTracks(id, name){
+  const c=document.getElementById('spContent');
+  c.innerHTML='<div class="sp-empty">Loading...</div>';
+  // Load up to 100 tracks
+  const d=await spFetch('/playlists/'+id+'/tracks?limit=100&fields=items(track(id,name,artists,album,duration_ms,uri))');
+  const items=(d?.items||[]).map(i=>i.track).filter(Boolean);
+  // Back button
+  const c2=document.getElementById('spContent');c2.innerHTML='';
+  const back=document.createElement('div');back.className='sp-section-title';
+  back.style.cursor='pointer';back.innerHTML='&#8592; '+name;
+  back.onclick=loadTopTracks;
+  const list=document.createElement('div');list.className='sp-list';
+  items.forEach(it=>{
+    if(!it?.name)return;
+    const art=it.album?.images?.[1]?.url||it.album?.images?.[0]?.url||'';
+    const div=document.createElement('div');div.className='sp-list-item';
+    div.innerHTML='<img src="'+art+'" alt=""><div class="sp-list-info"><div class="sp-list-name">'+it.name+'</div><div class="sp-list-sub">'+(it.artists?.map(a=>a.name).join(', ')||'')+'</div></div><div class="sp-list-dur">'+fmtMs(it.duration_ms)+'</div>';
+    div.onclick=(e)=>{e.stopPropagation();playTrack(it.uri);};
+    list.appendChild(div);
+  });
+  c2.appendChild(back);c2.appendChild(list);
+}
+
+function renderTrackList(items, title){
+  const c=document.getElementById('spContent');c.innerHTML='';
+  const t=document.createElement('div');t.className='sp-section-title';t.textContent=title;
+  const list=document.createElement('div');list.className='sp-list';
+  items.forEach(it=>{
+    if(!it?.name)return;
+    const art=it.album?.images?.[1]?.url||it.album?.images?.[0]?.url||'';
+    const div=document.createElement('div');div.className='sp-list-item';
+    div.innerHTML='<img src="'+art+'" alt=""><div class="sp-list-info"><div class="sp-list-name">'+it.name+'</div><div class="sp-list-sub">'+(it.artists?.map(a=>a.name).join(', ')||'')+'</div></div><div class="sp-list-dur">'+fmtMs(it.duration_ms)+'</div>';
+    div.onclick=(e)=>{e.stopPropagation();playTrack(it.uri);};
+    list.appendChild(div);
+  });
+  c.appendChild(t);c.appendChild(list);
 }
 
 async function spSearch(){
-  const q=document.getElementById('spSearchInp').value.trim();if(!q)return;
-  const d=await spFetch(`/search?q=${encodeURIComponent(q)}&type=track&limit=25`);
-  const t=renderGrid(d?.tracks?.items||[],'track');
-  if(t)t.textContent=`Results for "${q}"`;
+  const q=document.getElementById('spSearchInp').value.trim();
+  if(!q){loadTopTracks();return;}
+  const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track&limit=50');
+  renderTrackList(d?.tracks?.items||[],'Results for "'+q+'"');
 }
 
 async function playTrack(uri){

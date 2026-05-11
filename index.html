@@ -514,17 +514,29 @@ async function loadTopTracks(){
 async function loadPlaylistTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
-  // Try v2 endpoint with simplified fields
-  const d=await spFetch('/playlists/'+id+'?fields=tracks.items(track(id,name,artists,album,duration_ms,uri))');
-  const raw=(d?.tracks?.items)||[];
-  const items=raw.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
-  if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks);return;}
-  // Fallback: get playlist without track fields restriction
-  const d2=await spFetch('/playlists/'+id+'/tracks?limit=100&additional_types=track');
-  const raw2=(d2?.items)||[];
-  const items2=raw2.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
-  if(!items2.length){c.innerHTML='<div class="sp-empty">No tracks found</div>';return;}
-  renderTrackList(items2,name,'&#8592; Back',loadTopTracks);
+  // Liked Songs special case
+  if(name==='Liked Songs'){
+    const d=await spFetch('/me/tracks?limit=50');
+    const items=(d?.items||[]).map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
+    if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks);return;}
+  }
+  // Try playlist object first (100 tracks)
+  const d=await spFetch('/playlists/'+id+'?market=GB');
+  if(d?.tracks?.items?.length){
+    const items=d.tracks.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
+    if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks);return;}
+  }
+  // Try tracks endpoint
+  const d2=await spFetch('/playlists/'+id+'/tracks?limit=50&market=GB');
+  if(d2?.items?.length){
+    const items2=d2.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
+    if(items2.length){renderTrackList(items2,name,'&#8592; Back',loadTopTracks);return;}
+  }
+  // Search fallback
+  const d3=await spFetch('/search?q='+encodeURIComponent(name)+'&type=track&limit=10&market=GB');
+  const items3=(d3?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
+  if(items3.length){renderTrackList(items3,name,'&#8592; Back',loadTopTracks);return;}
+  c.innerHTML='<div style="padding:30px;text-align:center;color:var(--subtext);font-size:13px;line-height:1.6;">Cannot load playlist in Spotify dev mode.<br><br><b style="color:var(--text);">Fix:</b> Go to Spotify Developer Dashboard<br>→ Request Extended Quota access</div>';
 }
 
 async function loadAlbumTracks(id,name,images){
@@ -564,7 +576,8 @@ function renderTrackList(items,title,backLabel,backFn){
     const art=it.album?.images?.[1]?.url||it.album?.images?.[0]?.url||'';
     const div=document.createElement('div');div.className='sp-list-item';
     div.innerHTML='<img src="'+art+'" alt=""><div class="sp-list-info"><div class="sp-list-name">'+it.name+'</div><div class="sp-list-sub">'+(it.artists?.map(a=>a.name).join(', ')||'')+'</div></div>'+(it.duration_ms?'<div class="sp-list-dur">'+fmtMs(it.duration_ms)+'</div>':'');
-    div.onclick=(e)=>{e.stopPropagation();playTrack(it.uri);};
+    const td={name:it.name,artist:it.artists?.map(a=>a.name).join(', ')||'',art:it.album?.images?.[0]?.url||''};
+    div.onclick=(e)=>{e.stopPropagation();playTrack(it.uri,td);};
     list.appendChild(div);
   });
   c.appendChild(back);c.appendChild(list);
@@ -577,21 +590,31 @@ async function spSearch(){
   renderTrackList(d?.tracks?.items||[],'Results for "'+q+'"');
 }
 
-async function playTrack(uri){
+async function playTrack(uri, td){
+  // Try Web API first
   await spFetch('/me/player/play','PUT',{uris:[uri]});
-  // Update now-playing only, don't clear list
   setTimeout(async()=>{
-    const d=await spFetch('/me/player');if(!d)return;
-    S.spotPlaying=d.is_playing;S.spotDur=d.item?.duration_ms||0;S.spotPos=d.progress_ms||0;S._pollTime=Date.now();
-    const it=d.item;if(!it)return;
-    const name=it.name||'--',artist=it.artists?.map(a=>a.name).join(', ')||'--',art=it.album?.images?.[0]?.url||'';
-    setEl('spTrack',name);setEl('spArtist',artist);setEl('fsTrack',name);setEl('fsArtist',artist);
-    if(art){
-      setSrc('spArt',art);setSrc('fsArt',art);
-      if(document.getElementById('spFs').classList.contains('open'))applyArtTint(art);
+    const d=await spFetch('/me/player');
+    if(d){
+      S.spotPlaying=d.is_playing;S.spotDur=d.item?.duration_ms||0;S.spotPos=d.progress_ms||0;S._pollTime=Date.now();
+      const it=d.item;
+      if(it){
+        const name=it.name||'--',artist=it.artists?.map(a=>a.name).join(', ')||'--',art=it.album?.images?.[0]?.url||'';
+        setEl('spTrack',name);setEl('spArtist',artist);setEl('fsTrack',name);setEl('fsArtist',artist);
+        if(art){setSrc('spArt',art);setSrc('fsArt',art);if(document.getElementById('spFs').classList.contains('open'))applyArtTint(art);}
+        const pi=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';
+        setHTML('spPlayIco',pi);setHTML('spFsIco',pi);updProg();
+        return;
+      }
     }
-    const pi=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';
-    setHTML('spPlayIco',pi);setHTML('spFsIco',pi);updProg();
+    // Fallback: open track directly in Spotify app via URI scheme
+    if(td){
+      setEl('spTrack',td.name||'--');setEl('spArtist',td.artist||'--');
+      setEl('fsTrack',td.name||'--');setEl('fsArtist',td.artist||'--');
+      if(td.art){setSrc('spArt',td.art);setSrc('fsArt',td.art);if(document.getElementById('spFs').classList.contains('open'))applyArtTint(td.art);}
+    }
+    // Open in Spotify app
+    window.location.href=uri;
   },700);
 }
 

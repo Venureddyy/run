@@ -269,7 +269,7 @@ body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
 <script>
 const SPOT_CLIENT='9ccf3c3270234334b3c74317f5ebd466';
 const SPOT_REDIRECT='https://venureddyy.github.io/run/';
-const SPOT_SCOPES='streaming user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read user-top-read user-read-recently-played user-follow-read playlist-read-private playlist-read-collaborative';
+const SPOT_SCOPES='streaming user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read user-top-read user-read-recently-played user-follow-read playlist-read-private playlist-read-collaborative user-read-private user-read-email';
 const S={targetSpd:0,prevSpd:0,dispSpd:0,trip:0,odo:null,lat:null,lon:null,lastLat:null,lastLon:null,tempFetched:false,spotToken:null,spotPlaying:false,spotDur:0,spotPos:0};
 
 // Clock
@@ -339,7 +339,7 @@ async function handleCb(code){
       localStorage.setItem('sp_tok',d.access_token);
       localStorage.setItem('sp_tok_exp',Date.now()+d.expires_in*1000);
       localStorage.setItem('sp_scopes',SPOT_SCOPES);
-      localStorage.setItem('sp_ver','v4');
+      localStorage.setItem('sp_ver','v5');
       if(d.refresh_token)localStorage.setItem('sp_ref',d.refresh_token);
       localStorage.removeItem('sp_v');
       history.replaceState({},document.title,location.pathname);
@@ -592,10 +592,11 @@ async function spSearch(){
   const c=document.getElementById('spContent');
   c.innerHTML='<div style="padding:20px;color:var(--subtext);">Searching...</div>';
   // Search each type separately to avoid limit conflicts
+  const eq=encodeURIComponent(q);
   const [dTracks,dAlbums,dPlaylists]=await Promise.all([
-    spFetch('/search?q='+encodeURIComponent(q)+'&type=track&limit=20'),
-    spFetch('/search?q='+encodeURIComponent(q)+'&type=album&limit=12'),
-    spFetch('/search?q='+encodeURIComponent(q)+'&type=playlist&limit=12'),
+    spFetch('/search?q='+eq+'&type=track&limit=5'),
+    spFetch('/search?q='+eq+'&type=album&limit=5'),
+    spFetch('/search?q='+eq+'&type=playlist&limit=5'),
   ]);
   if(!dTracks&&!dAlbums&&!dPlaylists){c.innerHTML='<div style="padding:20px;color:var(--subtext);">No results</div>';return;}
   c.innerHTML='';
@@ -852,7 +853,7 @@ window.addEventListener('load',()=>{
   if(_sp.get('code')){handleCb(_sp.get('code'));}
   else{
     // v3 = version flag, clears token if scopes updated
-    if(localStorage.getItem('sp_ver')!=='v4'){
+    if(localStorage.getItem('sp_ver')!=='v5'){
       localStorage.removeItem('sp_tok');localStorage.removeItem('sp_tok_exp');
       localStorage.removeItem('sp_scopes');localStorage.removeItem('sp_ref');
       localStorage.removeItem('sp_v');

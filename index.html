@@ -518,11 +518,13 @@ async function loadPlaylistTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
   const playlistUri='spotify:playlist:'+id;
+  // Liked Songs
   if(name==='Liked Songs'){
     const d=await spFetch('/me/tracks?limit=50');
     const items=(d?.items||[]).map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
     if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,null);return;}
   }
+  // Try to get tracks
   const d=await spFetch('/playlists/'+id+'?market=GB');
   if(d?.tracks?.items?.length){
     const items=d.tracks.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
@@ -533,7 +535,23 @@ async function loadPlaylistTracks(id,name){
     const items2=d2.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
     if(items2.length){renderTrackList(items2,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
   }
-  c.innerHTML='<div style="padding:30px;text-align:center;color:var(--subtext);font-size:13px;line-height:1.6;">Cannot load playlist in dev mode.<br><br>Request Extended Quota on Spotify Developer Dashboard.</div>';
+  // Can't load tracks — show play button only using context URI
+  c.innerHTML='';
+  const hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;';
+  const ttl=document.createElement('div');ttl.className='sp-section-title';
+  ttl.style.cssText='cursor:pointer;margin:0;';ttl.innerHTML='&#8592; Back';
+  ttl.onclick=loadTopTracks;
+  const playAll=document.createElement('button');
+  playAll.style.cssText='background:#1db954;border:none;border-radius:50%;width:48px;height:48px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+  playAll.innerHTML='<svg viewBox="0 0 24 24" fill="white" width="22" height="22"><path d="M8 5v14l11-7z"/></svg>';
+  playAll.onclick=()=>{spFetch('/me/player/play','PUT',{context_uri:playlistUri});setTimeout(pollSpot,800);};
+  hdr.appendChild(ttl);hdr.appendChild(playAll);
+  c.appendChild(hdr);
+  const msg=document.createElement('div');
+  msg.style.cssText='text-align:center;padding:40px 20px;color:var(--subtext);font-size:13px;line-height:1.8;';
+  msg.innerHTML='<b style="color:var(--text);font-size:16px;">'+name+'</b><br><br>Tap ▶ to play this playlist<br>Track list unavailable in dev mode';
+  c.appendChild(msg);
 }
 
 async function loadAlbumTracks(id,name,images){

@@ -595,59 +595,40 @@ async function spSearch(){
   if(!d){c.innerHTML='<div style="padding:20px;color:var(--subtext);">No results</div>';return;}
   c.innerHTML='';
 
-  function addSection(title,items,clickFn){
-    if(!items||!items.length)return;
-    const t=document.createElement('div');t.className='sp-section-title';t.textContent=title;
-    const g=document.createElement('div');g.className='sp-art-grid';
-    items.forEach(it=>{
-      const art=it.images?.[0]?.url||it.album?.images?.[0]?.url||'';
-      const div=document.createElement('div');div.className='sp-art-card';
-      const img=document.createElement('img');img.src=art;img.alt=it.name;
-      img.onerror=()=>{img.style.background='var(--btn-bg)';img.removeAttribute('src');};
-      div.appendChild(img);div.onclick=clickFn(it);
-      g.appendChild(div);
-    });
-    c.appendChild(t);c.appendChild(g);
-  }
-
-  // Albums
   const albums=(d.albums?.items||[]).filter(a=>a&&a.name);
+  const playlists=(d.playlists?.items||[]).filter(p=>p&&p.name);
+  const tracks=(d.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
+
   if(albums.length){
-    const t=document.createElement('div');t.className='sp-section-title';t.textContent='ALBUMS';
+    const t=document.createElement('div');t.className='sp-section-title';t.textContent='ALBUMS';c.appendChild(t);
     const g=document.createElement('div');g.className='sp-art-grid';
     albums.forEach(al=>{
-      const art=al.images?.[0]?.url||'';
       const div=document.createElement('div');div.className='sp-art-card';
-      const img=document.createElement('img');img.src=art;img.alt=al.name;
+      const img=document.createElement('img');img.src=al.images?.[0]?.url||'';img.alt=al.name;
       img.onerror=()=>{img.style.background='var(--btn-bg)';img.removeAttribute('src');};
       div.appendChild(img);
       div.onclick=()=>loadAlbumTracks(al.id,al.name,al.images);
       g.appendChild(div);
     });
-    c.appendChild(t);c.appendChild(g);
+    c.appendChild(g);
   }
 
-  // Playlists
-  const playlists=(d.playlists?.items||[]).filter(p=>p&&p.name);
   if(playlists.length){
-    const t=document.createElement('div');t.className='sp-section-title';t.textContent='PLAYLISTS';
+    const t=document.createElement('div');t.className='sp-section-title';t.textContent='PLAYLISTS';c.appendChild(t);
     const g=document.createElement('div');g.className='sp-art-grid';
     playlists.forEach(pl=>{
-      const art=pl.images?.[0]?.url||'';
       const div=document.createElement('div');div.className='sp-art-card';
-      const img=document.createElement('img');img.src=art;img.alt=pl.name;
+      const img=document.createElement('img');img.src=pl.images?.[0]?.url||'';img.alt=pl.name;
       img.onerror=()=>{img.style.background='var(--btn-bg)';img.removeAttribute('src');};
       div.appendChild(img);
       div.onclick=()=>loadPlaylistTracks(pl.id,pl.name);
       g.appendChild(div);
     });
-    c.appendChild(t);c.appendChild(g);
+    c.appendChild(g);
   }
 
-  // Tracks
-  const tracks=(d.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
   if(tracks.length){
-    const back=document.createElement('div');back.className='sp-section-title';back.textContent='TRACKS';
+    const t=document.createElement('div');t.className='sp-section-title';t.textContent='TRACKS';c.appendChild(t);
     const list=document.createElement('div');list.className='sp-list';
     tracks.forEach(it=>{
       const art=it.album?.images?.[1]?.url||it.album?.images?.[0]?.url||'';
@@ -657,7 +638,7 @@ async function spSearch(){
       div.onclick=(e)=>{e.stopPropagation();playTrack(it.uri,td);};
       list.appendChild(div);
     });
-    c.appendChild(back);c.appendChild(list);
+    c.appendChild(list);
   }
 
   if(!albums.length&&!playlists.length&&!tracks.length)

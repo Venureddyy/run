@@ -586,8 +586,9 @@ function renderTrackList(items,title,backLabel,backFn){
 async function spSearch(){
   const q=document.getElementById('spSearchInp').value.trim();
   if(!q){loadTopTracks();return;}
-  const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track&limit=50');
-  renderTrackList(d?.tracks?.items||[],'Results for "'+q+'"');
+  const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track&limit=20&market=GB');
+  const items=(d?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
+  renderTrackList(items,'Results for "'+q+'"','&#8592; Back',loadTopTracks);
 }
 
 async function playTrack(uri, td){

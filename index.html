@@ -508,8 +508,9 @@ async function loadTopTracks(){
 async function loadPlaylistTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
-  const d=await spFetch('/playlists/'+id+'/tracks?limit=100&fields=items(track(id,name,artists,album,duration_ms,uri))');
-  const items=(d?.items||[]).map(i=>i.track).filter(Boolean);
+  const d=await spFetch('/playlists/'+id+'/tracks?limit=100');
+  const items=(d?.items||[]).map(i=>i.track).filter(t=>t&&t.name&&t.uri);
+  if(!items.length){c.innerHTML='<div class="sp-empty">No tracks found</div>';return;}
   renderTrackList(items,name,'&#8592; Back',loadTopTracks);
 }
 
@@ -528,8 +529,10 @@ async function loadAlbumTracks(id,name,images){
 async function loadArtistTopTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
-  const d=await spFetch('/artists/'+id+'/top-tracks?market=GB');
-  renderTrackList(d?.tracks||[],name,'&#8592; Back',loadTopTracks);
+  const d=await spFetch('/artists/'+id+'/top-tracks?market=from_token');
+  const tracks=(d?.tracks||[]).filter(t=>t&&t.name&&t.uri);
+  if(!tracks.length){c.innerHTML='<div class="sp-empty">No tracks found</div>';return;}
+  renderTrackList(tracks,name,'&#8592; Back',loadTopTracks);
 }
 
 function renderTrackList(items,title,backLabel,backFn){

@@ -525,14 +525,17 @@ async function loadPlaylistTracks(id,name){
     if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,null);return;}
   }
   // Try to get tracks
-  // Try /tracks endpoint first — works for public playlists
+  // Try /tracks endpoint first
+  console.log('Loading playlist tracks for:',id);
   const d2=await spFetch('/playlists/'+id+'/tracks?limit=100');
+  console.log('Tracks response:',d2,'items:',d2?.items?.length);
   if(d2?.items?.length){
     const items2=d2.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
     if(items2.length){renderTrackList(items2,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
   }
   // Fallback: playlist object
   const d=await spFetch('/playlists/'+id);
+  console.log('Playlist object:',d,'tracks:',d?.tracks?.items?.length);
   if(d?.tracks?.items?.length){
     const items=d.tracks.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
     if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,playlistUri);return;}

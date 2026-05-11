@@ -591,14 +591,18 @@ async function spSearch(){
   if(!q){loadTopTracks();return;}
   const c=document.getElementById('spContent');
   c.innerHTML='<div style="padding:20px;color:var(--subtext);">Searching...</div>';
-  const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track,album,playlist&limit=20');
-  console.log('Search raw:',d,'status:',d===null?'null':'ok','tracks:',d?.tracks?.items?.length,'albums:',d?.albums?.items?.length);
-  if(!d){c.innerHTML='<div style="padding:20px;color:var(--subtext);">No results</div>';return;}
+  // Search each type separately to avoid limit conflicts
+  const [dTracks,dAlbums,dPlaylists]=await Promise.all([
+    spFetch('/search?q='+encodeURIComponent(q)+'&type=track&limit=20'),
+    spFetch('/search?q='+encodeURIComponent(q)+'&type=album&limit=12'),
+    spFetch('/search?q='+encodeURIComponent(q)+'&type=playlist&limit=12'),
+  ]);
+  if(!dTracks&&!dAlbums&&!dPlaylists){c.innerHTML='<div style="padding:20px;color:var(--subtext);">No results</div>';return;}
   c.innerHTML='';
 
-  const albums=(d.albums?.items||[]).filter(a=>a&&a.name);
-  const playlists=(d.playlists?.items||[]).filter(p=>p&&p.name);
-  const tracks=(d.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
+  const albums=(dAlbums?.albums?.items||[]).filter(a=>a&&a.name);
+  const playlists=(dPlaylists?.playlists?.items||[]).filter(p=>p&&p.name);
+  const tracks=(dTracks?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
 
   if(albums.length){
     const t=document.createElement('div');t.className='sp-section-title';t.textContent='ALBUMS';c.appendChild(t);

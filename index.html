@@ -336,7 +336,7 @@ async function handleCb(code){
       localStorage.setItem('sp_tok',d.access_token);
       localStorage.setItem('sp_tok_exp',Date.now()+d.expires_in*1000);
       localStorage.setItem('sp_scopes',SPOT_SCOPES);
-      localStorage.setItem('sp_ver','v3');
+      localStorage.setItem('sp_ver','v4');
       if(d.refresh_token)localStorage.setItem('sp_ref',d.refresh_token);
       localStorage.removeItem('sp_v');
       history.replaceState({},document.title,location.pathname);
@@ -359,7 +359,7 @@ async function spFetch(ep,method='GET',body=null){
   try{
     const r=await fetch('https://api.spotify.com/v1'+ep,opts);
     if(r.status===204||r.status===202)return null;
-    if(!r.ok){const e=await r.json().catch(()=>({}));console.warn('spFetch error',r.status,ep,e);return null;}
+    if(!r.ok){const e=await r.json().catch(()=>({}));console.warn('spFetch error',r.status,ep,JSON.stringify(e));return null;}
     return await r.json();
   }catch(e){console.error('spFetch exception',ep,e);return null;}
 }
@@ -514,15 +514,17 @@ async function loadTopTracks(){
 async function loadPlaylistTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
-  console.log('Loading playlist:',id);
-  const d=await spFetch('/playlists/'+id+'/tracks?limit=100');
-  console.log('Playlist response:',d?JSON.stringify(d).slice(0,300):'null');
-  const raw=(d?.items)||[];
-  console.log('Raw items count:',raw.length);
+  // Try v2 endpoint with simplified fields
+  const d=await spFetch('/playlists/'+id+'?fields=tracks.items(track(id,name,artists,album,duration_ms,uri))');
+  const raw=(d?.tracks?.items)||[];
   const items=raw.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
-  console.log('Filtered items:',items.length);
-  if(!items.length){c.innerHTML='<div class="sp-empty">No tracks found</div>';return;}
-  renderTrackList(items,name,'&#8592; Back',loadTopTracks);
+  if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks);return;}
+  // Fallback: get playlist without track fields restriction
+  const d2=await spFetch('/playlists/'+id+'/tracks?limit=100&additional_types=track');
+  const raw2=(d2?.items)||[];
+  const items2=raw2.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
+  if(!items2.length){c.innerHTML='<div class="sp-empty">No tracks found</div>';return;}
+  renderTrackList(items2,name,'&#8592; Back',loadTopTracks);
 }
 
 async function loadAlbumTracks(id,name,images){
@@ -540,11 +542,15 @@ async function loadAlbumTracks(id,name,images){
 async function loadArtistTopTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
-  console.log('Loading artist:',id);
-  const d=await spFetch('/artists/'+id+'/top-tracks?market=from_token');
-  console.log('Artist response:',JSON.stringify(d).slice(0,300));
-  const tracks=(d?.tracks||[]).filter(t=>t&&t.name&&t.uri);
-  console.log('Tracks count:',tracks.length);
+  // Use search API — no special permissions needed
+  const q=encodeURIComponent(name);
+  const d=await spFetch('/search?q=artist:'+q+'&type=track&limit=50');
+  let tracks=(d?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri&&
+    t.artists?.some(a=>a.name.toLowerCase().includes(name.toLowerCase())||name.toLowerCase().includes(a.name.toLowerCase())));
+  if(!tracks.length){
+    const d2=await spFetch('/search?q='+q+'&type=track&limit=50');
+    tracks=(d2?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
+  }
   if(!tracks.length){c.innerHTML='<div class="sp-empty">No tracks found</div>';return;}
   renderTrackList(tracks,name,'&#8592; Back',loadTopTracks);
 }
@@ -765,7 +771,7 @@ window.addEventListener('load',()=>{
   if(_sp.get('code')){handleCb(_sp.get('code'));}
   else{
     // v3 = version flag, clears token if scopes updated
-    if(localStorage.getItem('sp_ver')!=='v3'){
+    if(localStorage.getItem('sp_ver')!=='v4'){
       localStorage.removeItem('sp_tok');localStorage.removeItem('sp_tok_exp');
       localStorage.removeItem('sp_scopes');localStorage.removeItem('sp_ref');
       localStorage.removeItem('sp_v');

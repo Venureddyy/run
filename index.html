@@ -525,15 +525,17 @@ async function loadPlaylistTracks(id,name){
     if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,null);return;}
   }
   // Try to get tracks
-  const d=await spFetch('/playlists/'+id+'?market=GB');
-  if(d?.tracks?.items?.length){
-    const items=d.tracks.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
-    if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
-  }
-  const d2=await spFetch('/playlists/'+id+'/tracks?limit=50&market=GB');
+  // Try /tracks endpoint first — works for public playlists
+  const d2=await spFetch('/playlists/'+id+'/tracks?limit=100');
   if(d2?.items?.length){
     const items2=d2.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
     if(items2.length){renderTrackList(items2,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
+  }
+  // Fallback: playlist object
+  const d=await spFetch('/playlists/'+id);
+  if(d?.tracks?.items?.length){
+    const items=d.tracks.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
+    if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
   }
   // Can't load tracks — show play button only using context URI
   c.innerHTML='';

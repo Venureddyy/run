@@ -514,6 +514,33 @@ async function loadTopTracks(){
   })));
 }
 
+async function loadPlaylistBySearch(id,name){
+  const c=document.getElementById('spContent');
+  c.innerHTML='<div class="sp-empty">Loading...</div>';
+  const playlistUri='spotify:playlist:'+id;
+  // Try API first
+  const d=await spFetch('/playlists/'+id+'/tracks?limit=100');
+  if(d?.items?.length){
+    const items=d.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
+    if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
+  }
+  // Fallback: search for tracks matching playlist name
+  const d2=await spFetch('/search?q='+encodeURIComponent(name)+'&type=track&limit=20');
+  const items2=(d2?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
+  if(items2.length){renderTrackList(items2,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
+  // Just show play button
+  c.innerHTML='';
+  const hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;';
+  const ttl=document.createElement('div');ttl.className='sp-section-title';ttl.style.cssText='cursor:pointer;margin:0;';ttl.innerHTML='&#8592; Back';ttl.onclick=loadTopTracks;
+  const btn=document.createElement('button');btn.style.cssText='background:#1db954;border:none;border-radius:50%;width:48px;height:48px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="white" width="22" height="22"><path d="M8 5v14l11-7z"/></svg>';
+  btn.onclick=()=>{spFetch('/me/player/play','PUT',{context_uri:playlistUri});setTimeout(pollSpot,800);};
+  hdr.appendChild(ttl);hdr.appendChild(btn);c.appendChild(hdr);
+  const msg=document.createElement('div');msg.style.cssText='text-align:center;padding:40px 20px;color:var(--subtext);font-size:13px;line-height:1.8;';
+  msg.innerHTML='<b style="color:var(--text);">'+name+'</b><br><br>Tap ▶ to play';
+  c.appendChild(msg);
+}
+
 async function loadPlaylistTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
@@ -533,11 +560,14 @@ async function loadPlaylistTracks(id,name){
     const items2=d2.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
     if(items2.length){renderTrackList(items2,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
   }
-  // Fallback: playlist object
+  // Fallback: playlist object tracks
   const d=await spFetch('/playlists/'+id);
-  console.log('Playlist object:',d,'tracks:',d?.tracks?.items?.length);
-  if(d?.tracks?.items?.length){
-    const items=d.tracks.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
+  console.log('Playlist object tracks:',d?.tracks);
+  const rawTracks=d?.tracks?.items||d?.tracks||[];
+  const arr=Array.isArray(rawTracks)?rawTracks:[];
+  if(arr.length){
+    // Items can be {track:{...}} or just track objects directly
+    const items=arr.map(i=>i?.track||i).filter(t=>t&&t.name&&t.uri);
     if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
   }
   // Can't load tracks — show play button only using context URI
@@ -681,7 +711,7 @@ async function spSearch(){
       const img=document.createElement('img');img.src=pl.images?.[0]?.url||'';img.alt=pl.name;
       img.onerror=()=>{img.style.background='var(--btn-bg)';img.removeAttribute('src');};
       div.appendChild(img);
-      div.onclick=()=>loadPlaylistTracks(pl.id,pl.name);
+      div.onclick=()=>loadPlaylistBySearch(pl.id,pl.name);
       g.appendChild(div);
     });
     c.appendChild(g);

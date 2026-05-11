@@ -52,21 +52,21 @@ body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
 #spotPlayer{display:none;flex-direction:column;height:100dvh;overflow:hidden}
 
 /* Now playing bar */
-.sp-nowplaying{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--sp-bg);border-bottom:1px solid var(--divider);flex-shrink:0}
-.sp-art{width:52px;height:52px;border-radius:6px;object-fit:cover;background:var(--btn-bg);flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.sp-nowplaying{display:flex;align-items:center;gap:0;padding:0;background:var(--sp-bg);border-bottom:1px solid var(--divider);flex-shrink:0;height:88px}
+.sp-art{width:88px;height:88px;border-radius:0;object-fit:cover;background:var(--btn-bg);flex-shrink:0;}
 .sp-np-info{flex:1;min-width:0}
 .sp-np-track{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-np-artist{font-size:12px;color:var(--subtext);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-np-controls{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .sp-ctrl-btn{background:none;border:none;cursor:pointer;color:var(--subtext);display:flex;align-items:center;justify-content:center;transition:color 0.2s;padding:4px}
 .sp-ctrl-btn:hover{color:var(--text)}
-.sp-play-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--text);background:transparent;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.sp-play-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--text);background:transparent;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:all 0.2s}
 .sp-play-btn:hover{background:var(--btn-bg)}
 
 /* Progress */
 .sp-progress{padding:8px 20px 4px;flex-shrink:0}
-.sp-prog-bar{width:100%;height:3px;background:var(--range-bg);border-radius:2px;cursor:pointer}
-.sp-prog-fill{height:100%;border-radius:2px;background:#1db954;transition:width 0.8s linear}
+.sp-prog-bar{width:100%;height:2px;background:var(--range-bg);border-radius:0;cursor:pointer}
+.sp-prog-fill{height:100%;border-radius:0;background:#1db954;transition:width 0.8s linear}
 .sp-prog-times{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--subtext);font-family:'Inter',sans-serif}
 
 /* Search */
@@ -80,12 +80,12 @@ body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
 .sp-content{flex:1;overflow-y:auto;padding:10px 16px 16px;scrollbar-width:thin;scrollbar-color:var(--divider) transparent}
 .sp-content::-webkit-scrollbar{width:4px}
 .sp-content::-webkit-scrollbar-thumb{background:var(--divider);border-radius:2px}
-.sp-section-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--subtext);margin:16px 0 10px;padding-left:2px;cursor:default}
+.sp-section-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--subtext);margin:16px 0 10px;padding-left:2px;cursor:default;text-align:center;}
 /* Tesla-style art grid */
 .sp-art-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:8px}
-.sp-art-card{cursor:pointer;transition:opacity 0.15s;border-radius:8px;overflow:hidden;aspect-ratio:1}
-.sp-art-card:hover{opacity:0.8}
-.sp-art-card img{width:100%;height:100%;object-fit:cover;display:block;background:var(--btn-bg)}
+.sp-art-card{cursor:pointer;transition:opacity 0.15s;aspect-ratio:1;overflow:hidden;}
+.sp-art-card:hover{opacity:0.75}
+.sp-art-card img{width:100%;height:100%;object-fit:cover;display:block;background:var(--btn-bg);border-radius:0;}
 .sp-art-card .sp-card-name{display:none}
 .sp-art-card .sp-card-sub{display:none}
 .sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-bottom:20px}
@@ -194,17 +194,20 @@ body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
 
     <!-- Now playing -->
     <div class="sp-nowplaying">
-      <div onclick="openFs()" style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;cursor:pointer;overflow:hidden;">
+      <div onclick="openFs()" style="display:flex;align-items:center;gap:0;flex:1;min-width:0;cursor:pointer;overflow:hidden;">
         <img id="spArt" class="sp-art" src="" alt="">
-        <div class="sp-np-info">
+        <div class="sp-np-info" style="padding:0 14px;">
           <div class="sp-np-track" id="spTrack">Nothing playing</div>
           <div class="sp-np-artist" id="spArtist">--</div>
+          <div id="spAlbum" style="font-size:11px;color:var(--subtext);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
         </div>
       </div>
-      <div class="sp-np-controls" style="flex-shrink:0;">
-        <button class="sp-ctrl-btn" onclick="spPrev()"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
-        <button class="sp-play-btn" onclick="spToggle()"><svg id="spPlayIco" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg></button>
-        <button class="sp-ctrl-btn" onclick="spNext()"><svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg></button>
+      <div class="sp-np-controls" style="flex-shrink:0;gap:6px;">
+        <button class="sp-ctrl-btn" onclick="spPrev()"><svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+        <button class="sp-play-btn" onclick="spToggle()"><svg id="spPlayIco" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M8 5v14l11-7z"/></svg></button>
+        <button class="sp-ctrl-btn" onclick="spNext()"><svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z"/></svg></button>
+        <button class="sp-ctrl-btn" onclick="document.getElementById('spSearchInp').focus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
+        <button class="sp-ctrl-btn" onclick="loadTopTracks()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
       </div>
     </div>
 
@@ -586,11 +589,11 @@ function renderTrackList(items,title,backLabel,backFn){
 async function spSearch(){
   const q=document.getElementById('spSearchInp').value.trim();
   if(!q){loadTopTracks();return;}
-  const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track&limit=10');
-  console.log('Search result:',d,JSON.stringify(d?.tracks?.items?.slice(0,2)));
+  const c=document.getElementById('spContent');
+  c.innerHTML='<div style="padding:20px;color:var(--subtext);">Searching...</div>';
+  const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track&limit=50');
   const items=(d?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
   if(!items.length){
-    const c=document.getElementById('spContent');
     c.innerHTML='<div style="padding:20px;color:var(--subtext);font-size:13px;">No results for "'+q+'"</div>';
     return;
   }

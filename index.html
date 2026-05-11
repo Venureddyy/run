@@ -355,7 +355,12 @@ function initSpot(){
 async function spFetch(ep,method='GET',body=null){
   const opts={method,headers:{'Authorization':'Bearer '+S.spotToken,'Content-Type':'application/json'}};
   if(body)opts.body=JSON.stringify(body);
-  try{const r=await fetch('https://api.spotify.com/v1'+ep,opts);if(r.status===204||r.status===202)return null;if(!r.ok)return null;return await r.json();}catch{return null;}
+  try{
+    const r=await fetch('https://api.spotify.com/v1'+ep,opts);
+    if(r.status===204||r.status===202)return null;
+    if(!r.ok){const e=await r.json().catch(()=>({}));console.warn('spFetch error',r.status,ep,e);return null;}
+    return await r.json();
+  }catch(e){console.error('spFetch exception',ep,e);return null;}
 }
 
 function fmtMs(ms){if(!ms)return'0:00';const s=Math.floor(ms/1000),m=Math.floor(s/60);return m+':'+String(s%60).padStart(2,'0');}
@@ -508,8 +513,13 @@ async function loadTopTracks(){
 async function loadPlaylistTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
+  console.log('Loading playlist:',id);
   const d=await spFetch('/playlists/'+id+'/tracks?limit=100');
-  const items=(d?.items||[]).map(i=>i.track).filter(t=>t&&t.name&&t.uri);
+  console.log('Playlist response:',JSON.stringify(d).slice(0,300));
+  const raw=d?.items||[];
+  console.log('Raw items count:',raw.length,'first item:',JSON.stringify(raw[0]).slice(0,200));
+  const items=raw.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
+  console.log('Filtered items:',items.length);
   if(!items.length){c.innerHTML='<div class="sp-empty">No tracks found</div>';return;}
   renderTrackList(items,name,'&#8592; Back',loadTopTracks);
 }
@@ -529,8 +539,11 @@ async function loadAlbumTracks(id,name,images){
 async function loadArtistTopTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
+  console.log('Loading artist:',id);
   const d=await spFetch('/artists/'+id+'/top-tracks?market=from_token');
+  console.log('Artist response:',JSON.stringify(d).slice(0,300));
   const tracks=(d?.tracks||[]).filter(t=>t&&t.name&&t.uri);
+  console.log('Tracks count:',tracks.length);
   if(!tracks.length){c.innerHTML='<div class="sp-empty">No tracks found</div>';return;}
   renderTrackList(tracks,name,'&#8592; Back',loadTopTracks);
 }
@@ -749,7 +762,17 @@ window.addEventListener('load',()=>{
   renderRoad();refreshUI();
   const _sp=new URLSearchParams(window.location.search);
   if(_sp.get('code')){handleCb(_sp.get('code'));}
-  else{const t=localStorage.getItem('sp_tok'),e=localStorage.getItem('sp_tok_exp');if(t&&e&&Date.now()<parseInt(e)){S.spotToken=t;initSpot();}}
+  else{
+    const t=localStorage.getItem('sp_tok'),e=localStorage.getItem('sp_tok_exp');
+    const savedScopes=localStorage.getItem('sp_scopes');
+    // Force re-auth if scopes changed
+    if(t&&e&&Date.now()<parseInt(e)&&savedScopes===SPOT_SCOPES){S.spotToken=t;initSpot();}
+    else{
+      // Clear everything so user sees Connect button with new scopes
+      localStorage.removeItem('sp_tok');localStorage.removeItem('sp_tok_exp');
+      localStorage.removeItem('sp_scopes');localStorage.removeItem('sp_ref');
+    }
+  }
   setInterval(updProg,500);
   if(location.search.includes('demo'))startDemo();
   else if('geolocation' in navigator){

@@ -542,14 +542,12 @@ async function loadAlbumTracks(id,name,images){
 async function loadArtistTopTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
-  // Use search API — no special permissions needed
   const q=encodeURIComponent(name);
-  const d=await spFetch('/search?q=artist:'+q+'&type=track&limit=50');
+  const d=await spFetch('/search?q='+q+'&type=track&limit=10&market=GB');
   let tracks=(d?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri&&
     t.artists?.some(a=>a.name.toLowerCase().includes(name.toLowerCase())||name.toLowerCase().includes(a.name.toLowerCase())));
   if(!tracks.length){
-    const d2=await spFetch('/search?q='+q+'&type=track&limit=50');
-    tracks=(d2?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
+    tracks=(d?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
   }
   if(!tracks.length){c.innerHTML='<div class="sp-empty">No tracks found</div>';return;}
   renderTrackList(tracks,name,'&#8592; Back',loadTopTracks);

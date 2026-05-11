@@ -586,8 +586,14 @@ function renderTrackList(items,title,backLabel,backFn){
 async function spSearch(){
   const q=document.getElementById('spSearchInp').value.trim();
   if(!q){loadTopTracks();return;}
-  const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track&limit=20&market=GB');
+  const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track&limit=10');
+  console.log('Search result:',d,JSON.stringify(d?.tracks?.items?.slice(0,2)));
   const items=(d?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
+  if(!items.length){
+    const c=document.getElementById('spContent');
+    c.innerHTML='<div style="padding:20px;color:var(--subtext);font-size:13px;">No results for "'+q+'"</div>';
+    return;
+  }
   renderTrackList(items,'Results for "'+q+'"','&#8592; Back',loadTopTracks);
 }
 

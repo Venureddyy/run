@@ -592,6 +592,7 @@ async function spSearch(){
   const c=document.getElementById('spContent');
   c.innerHTML='<div style="padding:20px;color:var(--subtext);">Searching...</div>';
   const d=await spFetch('/search?q='+encodeURIComponent(q)+'&type=track,album,playlist&limit=20');
+  console.log('Search raw:',d,'status:',d===null?'null':'ok','tracks:',d?.tracks?.items?.length,'albums:',d?.albums?.items?.length);
   if(!d){c.innerHTML='<div style="padding:20px;color:var(--subtext);">No results</div>';return;}
   c.innerHTML='';
 

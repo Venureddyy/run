@@ -517,29 +517,23 @@ async function loadTopTracks(){
 async function loadPlaylistTracks(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
-  // Liked Songs special case
+  const playlistUri='spotify:playlist:'+id;
   if(name==='Liked Songs'){
     const d=await spFetch('/me/tracks?limit=50');
     const items=(d?.items||[]).map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
-    if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks);return;}
+    if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,null);return;}
   }
-  // Try playlist object first (100 tracks)
   const d=await spFetch('/playlists/'+id+'?market=GB');
   if(d?.tracks?.items?.length){
     const items=d.tracks.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
-    if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks);return;}
+    if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
   }
-  // Try tracks endpoint
   const d2=await spFetch('/playlists/'+id+'/tracks?limit=50&market=GB');
   if(d2?.items?.length){
     const items2=d2.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
-    if(items2.length){renderTrackList(items2,name,'&#8592; Back',loadTopTracks);return;}
+    if(items2.length){renderTrackList(items2,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
   }
-  // Search fallback
-  const d3=await spFetch('/search?q='+encodeURIComponent(name)+'&type=track&limit=10&market=GB');
-  const items3=(d3?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
-  if(items3.length){renderTrackList(items3,name,'&#8592; Back',loadTopTracks);return;}
-  c.innerHTML='<div style="padding:30px;text-align:center;color:var(--subtext);font-size:13px;line-height:1.6;">Cannot load playlist in Spotify dev mode.<br><br><b style="color:var(--text);">Fix:</b> Go to Spotify Developer Dashboard<br>→ Request Extended Quota access</div>';
+  c.innerHTML='<div style="padding:30px;text-align:center;color:var(--subtext);font-size:13px;line-height:1.6;">Cannot load playlist in dev mode.<br><br>Request Extended Quota on Spotify Developer Dashboard.</div>';
 }
 
 async function loadAlbumTracks(id,name,images){
@@ -551,7 +545,8 @@ async function loadAlbumTracks(id,name,images){
     ...t,
     album:{id,name,images:albumFull?.images||images||[]}
   }));
-  renderTrackList(tracks,name,'&#8592; Back',loadTopTracks);
+  const albumUri='spotify:album:'+id;
+  renderTrackList(tracks,name,'&#8592; Back',loadTopTracks,albumUri);
 }
 
 async function loadArtistTopTracks(id,name){
@@ -568,22 +563,58 @@ async function loadArtistTopTracks(id,name){
   renderTrackList(tracks,name,'&#8592; Back',loadTopTracks);
 }
 
-function renderTrackList(items,title,backLabel,backFn){
+function renderTrackList(items,title,backLabel,backFn,contextUri){
   const c=document.getElementById('spContent');c.innerHTML='';
+  // Header row: back + play all button
+  const hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
   const back=document.createElement('div');back.className='sp-section-title';
-  back.style.cursor='pointer';back.innerHTML=backLabel||title;
+  back.style.cssText='cursor:pointer;margin:0;';back.innerHTML=backLabel||title;
   if(backFn)back.onclick=backFn;
-  const list=document.createElement('div');list.className='sp-list';
-  items.forEach(it=>{
+  hdr.appendChild(back);
+  // Play all button
+  if(contextUri||items.length){
+    const playAll=document.createElement('button');
+    playAll.style.cssText='background:#1db954;border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+    playAll.innerHTML='<svg viewBox="0 0 24 24" fill="white" width="18" height="18"><path d="M8 5v14l11-7z"/></svg>';
+    playAll.onclick=()=>{
+      if(contextUri){
+        spFetch('/me/player/play','PUT',{context_uri:contextUri});
+      } else if(items[0]){
+        const uris=items.filter(t=>t.uri).map(t=>t.uri);
+        spFetch('/me/player/play','PUT',{uris:uris.slice(0,50)});
+      }
+      setTimeout(pollSpot,800);
+    };
+    hdr.appendChild(playAll);
+  }
+  c.appendChild(hdr);
+  // Track grid
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;';
+  items.forEach((it,idx)=>{
     if(!it?.name)return;
-    const art=it.album?.images?.[1]?.url||it.album?.images?.[0]?.url||'';
-    const div=document.createElement('div');div.className='sp-list-item';
-    div.innerHTML='<img src="'+art+'" alt=""><div class="sp-list-info"><div class="sp-list-name">'+it.name+'</div><div class="sp-list-sub">'+(it.artists?.map(a=>a.name).join(', ')||'')+'</div></div>'+(it.duration_ms?'<div class="sp-list-dur">'+fmtMs(it.duration_ms)+'</div>':'');
-    const td={name:it.name,artist:it.artists?.map(a=>a.name).join(', ')||'',art:it.album?.images?.[0]?.url||''};
-    div.onclick=(e)=>{e.stopPropagation();playTrack(it.uri,td);};
-    list.appendChild(div);
+    const art=it.album?.images?.[0]?.url||it.album?.images?.[1]?.url||'';
+    const div=document.createElement('div');
+    div.style.cssText='cursor:pointer;display:flex;flex-direction:column;background:var(--sp-card);border-radius:6px;overflow:hidden;';
+    div.innerHTML='<img src="'+art+'" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;background:var(--btn-bg);">'
+      +'<div style="padding:6px 8px;">'
+      +'<div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+it.name+'</div>'
+      +'<div style="font-size:10px;color:var(--subtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">'+(it.artists?.map(a=>a.name).join(', ')||'')+'</div>'
+      +'</div>';
+    const td={name:it.name,artist:it.artists?.map(a=>a.name).join(', ')||'',art};
+    div.onclick=(e)=>{
+      e.stopPropagation();
+      if(contextUri){
+        spFetch('/me/player/play','PUT',{context_uri:contextUri,offset:{position:idx}});
+        setTimeout(pollSpot,800);
+      } else {
+        playTrack(it.uri,td);
+      }
+    };
+    grid.appendChild(div);
   });
-  c.appendChild(back);c.appendChild(list);
+  c.appendChild(grid);
 }
 
 async function spSearch(){

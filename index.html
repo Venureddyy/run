@@ -270,7 +270,7 @@ body.dark .icon-sun{display:none}body.dark .icon-moon{display:block}
 const SPOT_CLIENT='9ccf3c3270234334b3c74317f5ebd466';
 const SPOT_REDIRECT='https://venureddyy.github.io/run/';
 const SPOT_SCOPES='streaming user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read user-top-read user-read-recently-played user-follow-read playlist-read-private playlist-read-collaborative user-read-private user-read-email';
-const S={targetSpd:0,prevSpd:0,dispSpd:0,trip:0,odo:null,lat:null,lon:null,lastLat:null,lastLon:null,tempFetched:false,spotToken:null,spotPlaying:false,spotDur:0,spotPos:0};
+const S={targetSpd:0,prevSpd:0,dispSpd:0,trip:0,odo:null,lat:null,lon:null,lastLat:null,lastLon:null,tempFetched:false,spotToken:null,spotPlaying:false,spotDur:0,spotPos:0,_deviceId:null,_currentTrackId:null,_lastPlaying:null,_pollTime:null};
 
 // Clock
 function tickClock(){const n=new Date();document.getElementById('clTime').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
@@ -351,9 +351,48 @@ async function handleCb(code){
 function initSpot(){
   document.getElementById('spotLogin').style.display='none';
   const p=document.getElementById('spotPlayer');p.style.display='flex';p.style.flexDirection='column';p.style.height='100%';p.style.position='relative';
+  // Init Web Playback SDK
+  window.onSpotifyWebPlaybackSDKReady=createSpPlayer;
+  if(window.Spotify)createSpPlayer();
   pollSpot();loadTopTracks();
-  // Poll every 1s for accurate sync
   setInterval(pollSpot,1000);
+  setInterval(updProg,500);
+}
+
+function createSpPlayer(){
+  const player=new Spotify.Player({
+    name:'Car Dashboard',
+    getOAuthToken:cb=>cb(S.spotToken),
+    volume:0.8
+  });
+  player.addListener('ready',({device_id})=>{
+    console.log('SDK ready, device:',device_id);
+    S._deviceId=device_id;
+    spFetch('/me/player','PUT',{device_ids:[device_id],play:false});
+  });
+  player.addListener('not_ready',()=>{S._deviceId=null;});
+  player.addListener('player_state_changed',state=>{
+    if(!state)return;
+    S.spotPlaying=!state.paused;
+    S.spotDur=state.duration;S.spotPos=state.position;S._pollTime=Date.now();
+    const it=state.track_window?.current_track;
+    if(it&&it.id!==S._currentTrackId){
+      S._currentTrackId=it.id;
+      const name=it.name||'--',artist=it.artists?.map(a=>a.name).join(', ')||'--',art=it.album?.images?.[0]?.url||'';
+      setEl('spTrack',name);setEl('spArtist',artist);setEl('spAlbum',it.album?.name||'');
+      setEl('fsTrack',name);setEl('fsArtist',artist);
+      if(art){setSrc('spArt',art);setSrc('fsArt',art);if(document.getElementById('spFs').classList.contains('open'))applyArtTint(art);}
+    }
+    if(S.spotPlaying!==S._lastPlaying){
+      S._lastPlaying=S.spotPlaying;
+      const pi=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';
+      setHTML('spPlayIco',pi);setHTML('spFsIco',pi);
+    }
+    updProg();
+  });
+  player.addListener('account_error',()=>{console.warn('Spotify Premium required for Web Playback');});
+  player.connect();
+  S._player=player;
 }
 
 async function spFetch(ep,method='GET',body=null){
@@ -415,19 +454,17 @@ function updProg(){
 }
 
 async function spToggle(){
+  if(S._player){S._player.togglePlay();return;}
   await spFetch(S.spotPlaying?'/me/player/pause':'/me/player/play','PUT');
-  // Wait then read actual state from Spotify instead of guessing
   setTimeout(async()=>{
     const d=await spFetch('/me/player');if(!d)return;
-    S.spotPlaying=d.is_playing;
-    S.spotPos=d.progress_ms||0;S._pollTime=Date.now();
+    S.spotPlaying=d.is_playing;S.spotPos=d.progress_ms||0;S._pollTime=Date.now();
     const pi=S.spotPlaying?'<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>':'<path d="M8 5v14l11-7z"/>';
-    setHTML('spPlayIco',pi);setHTML('spFsIco',pi);
-    updProg();
+    setHTML('spPlayIco',pi);setHTML('spFsIco',pi);updProg();
   },400);
 }
-async function spNext(){await spFetch('/me/player/next','POST');setTimeout(pollSpot,600);}
-async function spPrev(){await spFetch('/me/player/previous','POST');setTimeout(pollSpot,600);}
+async function spNext(){if(S._player){S._player.nextTrack();return;}await spFetch('/me/player/next','POST');setTimeout(pollSpot,600);}
+async function spPrev(){if(S._player){S._player.previousTrack();return;}await spFetch('/me/player/previous','POST');setTimeout(pollSpot,600);}
 
 function renderGrid(items,type){
   const c=document.getElementById('spContent');c.innerHTML='';
@@ -952,5 +989,6 @@ window.addEventListener('load',()=>{
   }
 });
 </script>
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
 </body>
 </html>

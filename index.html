@@ -555,26 +555,41 @@ async function loadPlaylistBySearch(id,name){
   const c=document.getElementById('spContent');
   c.innerHTML='<div class="sp-empty">Loading...</div>';
   const playlistUri='spotify:playlist:'+id;
-  // Try API first
+  // Try authenticated API first
   const d=await spFetch('/playlists/'+id+'/tracks?limit=100');
   if(d?.items?.length){
     const items=d.items.map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
     if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
   }
-  // Fallback: search for tracks matching playlist name
+  // Try public Spotify API (no auth, works for any public playlist)
+  try{
+    const r=await fetch('https://api.spotify.com/v1/playlists/'+id+'/tracks?limit=100&fields=items(track(id,name,artists,album,duration_ms,uri))',{
+      headers:{'Authorization':'Bearer '+S.spotToken}
+    });
+    if(r.ok){
+      const pd=await r.json();
+      const items=(pd?.items||[]).map(i=>i?.track).filter(t=>t&&t.name&&t.uri);
+      if(items.length){renderTrackList(items,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
+    }
+  }catch(e){}
+  // Search fallback — finds tracks related to playlist name
   const d2=await spFetch('/search?q='+encodeURIComponent(name)+'&type=track&limit=20');
   const items2=(d2?.tracks?.items||[]).filter(t=>t&&t.name&&t.uri);
   if(items2.length){renderTrackList(items2,name,'&#8592; Back',loadTopTracks,playlistUri);return;}
-  // Just show play button
+  // Play button only
   c.innerHTML='';
   const hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;';
   const ttl=document.createElement('div');ttl.className='sp-section-title';ttl.style.cssText='cursor:pointer;margin:0;';ttl.innerHTML='&#8592; Back';ttl.onclick=loadTopTracks;
   const btn=document.createElement('button');btn.style.cssText='background:#1db954;border:none;border-radius:50%;width:48px;height:48px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
   btn.innerHTML='<svg viewBox="0 0 24 24" fill="white" width="22" height="22"><path d="M8 5v14l11-7z"/></svg>';
-  btn.onclick=()=>{spFetch('/me/player/play','PUT',{context_uri:playlistUri});setTimeout(pollSpot,800);};
+  btn.onclick=()=>{
+    if(S._deviceId)spFetch('/me/player/play','PUT',{context_uri:playlistUri,device_id:S._deviceId});
+    else spFetch('/me/player/play','PUT',{context_uri:playlistUri});
+    setTimeout(pollSpot,800);
+  };
   hdr.appendChild(ttl);hdr.appendChild(btn);c.appendChild(hdr);
   const msg=document.createElement('div');msg.style.cssText='text-align:center;padding:40px 20px;color:var(--subtext);font-size:13px;line-height:1.8;';
-  msg.innerHTML='<b style="color:var(--text);">'+name+'</b><br><br>Tap ▶ to play';
+  msg.innerHTML='<b style="color:var(--text);">'+name+'</b><br><br>Tap ▶ to play this playlist';
   c.appendChild(msg);
 }
 
@@ -773,8 +788,9 @@ async function spSearch(){
 }
 
 async function playTrack(uri, td){
-  // Try Web API first
-  await spFetch('/me/player/play','PUT',{uris:[uri]});
+  // Use device_id if SDK player is ready
+  const body=S._deviceId?{uris:[uri],device_id:S._deviceId}:{uris:[uri]};
+  await spFetch('/me/player/play','PUT',body);
   setTimeout(async()=>{
     const d=await spFetch('/me/player');
     if(d){

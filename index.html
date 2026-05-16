@@ -106,11 +106,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 
 <script>
 const S={spd:0,prevSpd:0,trip:0,odo:null,lat:null,lon:null,lastLat:null,lastLon:null,tempFetched:false,useMph:true};
+// Restore persisted values
+(()=>{
+  const odo=localStorage.getItem('odo');if(odo!==null)S.odo=parseFloat(odo);
+  const trip=localStorage.getItem('trip');if(trip!==null)S.trip=parseFloat(trip);
+  const mph=localStorage.getItem('useMph');if(mph!==null)S.useMph=mph!=='false';
+})();
 let demoOn=false,demoI=null,demoP=0,_lt=null,fsOn=false;
 
 // Clock
 function tick(){const n=new Date();document.getElementById('clock').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
 tick();setInterval(tick,10000);
+// Restore unit label
+document.getElementById('unit').textContent=S.useMph?'MPH':'KM/H';
 
 // Temp
 async function fetchTemp(la,lo){try{const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current_weather=true`);const d=await r.json();document.getElementById('temp').textContent=Math.round(d.current_weather.temperature)+' °C';}catch(e){}}
@@ -163,11 +171,16 @@ function onGPS(pos){
 
 function refreshUI(){
   document.getElementById('trip').textContent=S.useMph?S.trip.toFixed(1)+' mi':(S.trip*1.60934).toFixed(1)+' km';
-  if(S.odo!==null)document.getElementById('odo').textContent=S.useMph?Math.round(S.odo)+' mi':Math.round(S.odo*1.60934)+' km';
+  localStorage.setItem('trip',S.trip);
+  if(S.odo!==null){
+    document.getElementById('odo').textContent=S.useMph?Math.round(S.odo)+' mi':Math.round(S.odo*1.60934)+' km';
+    localStorage.setItem('odo',S.odo);
+  }
+  localStorage.setItem('useMph',S.useMph);
 }
 
-function toggleUnit(){S.useMph=!S.useMph;document.getElementById('unit').textContent=S.useMph?'MPH':'KM/H';showSpd(S.spd);refreshUI();}
-function resetTrip(){S.trip=0;refreshUI();}
+function toggleUnit(){S.useMph=!S.useMph;document.getElementById('unit').textContent=S.useMph?'MPH':'KM/H';showSpd(S.spd);refreshUI();localStorage.setItem('useMph',S.useMph);}
+function resetTrip(){S.trip=0;localStorage.removeItem('trip');refreshUI();}
 
 function showOdoModal(){
   const v=prompt('Enter odometer reading (miles):');

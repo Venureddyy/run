@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentry — Parked</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  background: #f0ede8;
+  color: #2a2a2a;
+  transition: background 0.5s, color 0.5s;
+}
+
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background: #000 !important;
+  color: #eee !important;
+}
+
+/* ── FULL SCREEN LAYOUT ── */
+.screen {
+  position: fixed; inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 28px;
+  z-index: 50;
+}
+
+.recording-badge {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #3a4a3a;
+  transition: color 0.5s;
+}
+[data-theme="dark"] .recording-badge { color: #ffffff; }
+
+.rec-dot {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #e82020;
+  box-shadow: 0 0 14px rgba(232,32,32,0.8);
+  animation: rec-blink 1.8s ease-in-out infinite;
+}
+@keyframes rec-blink {
+  0%,100% { opacity:1; box-shadow:0 0 8px rgba(232,32,32,0.7); }
+  50% { opacity:0.4; box-shadow:0 0 3px rgba(232,32,32,0.3); }
+}
+
+.topbar-right {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.clock {
+  font-size: 15px; font-weight: 400; letter-spacing: 0.04em;
+  color: #555; font-variant-numeric: tabular-nums;
+  transition: color 0.5s;
+}
+[data-theme="dark"] .clock { color: #888; }
+
+.icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: rgba(0,0,0,0.07);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  color: #555;
+}
+[data-theme="dark"] .icon-btn {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.08);
+  color: #888;
+}
+.icon-btn:hover { background: rgba(0,0,0,0.13); color: #222; }
+[data-theme="dark"] .icon-btn:hover { background: rgba(255,255,255,0.15); color: #eee; }
+.icon-btn:active { transform: scale(0.91); }
+.icon-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── CENTER — SENTRY EYE ── */
+/* Eye lives in right half, text in left half — no overlap */
+.eye-zone {
+  position: absolute; inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* shift eye to right half */
+  padding-left: 40%;
+}
+
+/* Vertical center line like real Tesla */
+.center-line {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.12) 20%, rgba(0,0,0,0.12) 80%, transparent 100%);
+  transition: background 0.5s;
+}
+[data-theme="dark"] .center-line {
+  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.10) 20%, rgba(255,255,255,0.10) 80%, transparent 100%);
+}
+
+/* THE BIG EYE */
+.big-eye-wrap {
+  position: relative;
+  width: min(300px, 42vw);
+  height: min(300px, 42vw);
+  flex-shrink: 0;
+}
+
+/* Canvas-drawn iris — done in JS */
+.eye-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  /* No CSS animation — rotation handled purely in JS to avoid transform conflict */
+}
+
+.big-eye-wrap {
+  animation: eye-breathe 3.5s ease-in-out infinite;
+}
+
+@keyframes eye-breathe {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.045); }
+}
+
+/* Pupil */
+.eye-pupil {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #1a0a00, #000);
+  transform: translate(-50%,-50%);
+  z-index: 5;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+
+/* Pupil glint */
+.eye-pupil::after {
+  content: '';
+  position: absolute;
+  top: 18%; left: 22%;
+  width: 22%; height: 22%;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+}
+
+/* ── BOTTOM LEFT — Sentry label only ── */
+.bottom-left {
+  position: absolute;
+  bottom: 0; left: 0;
+  padding: 28px 32px;
+  z-index: 50;
+}
+
+.sentry-label {
+  font-size: clamp(18px, 2.8vw, 28px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2a3a2a;
+  line-height: 1;
+  transition: color 0.5s;
+}
+[data-theme="dark"] .sentry-label { color: #ccc; }
+.sentry-label span { font-weight: 300; letter-spacing: 0.12em; }
+
+/* ── CENTER TEXT — Parking mode + clock ── */
+.center-text {
+  position: absolute;
+  top: 0; bottom: 56px;
+  left: 0;
+  width: 55%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  z-index: 50;
+  pointer-events: none;
+  text-align: left;
+  padding: 0 44px;
+}
+
+.parking-label {
+  font-size: clamp(28px, 4.8vw, 60px);
+  font-weight: 700;
+  letter-spacing: 0em;
+  color: #1a1a1a;
+  transition: color 0.5s;
+  line-height: 1.15;
+}
+[data-theme="dark"] .parking-label { color: #ffffff; }
+
+.backsoon-label {
+  font-size: clamp(28px, 4.8vw, 60px);
+  font-weight: 700;
+  letter-spacing: 0em;
+  color: #1a1a1a;
+  transition: color 0.5s;
+  line-height: 1.15;
+}
+[data-theme="dark"] .backsoon-label { color: #ffffff; }
+
+.center-clock {
+  font-size: clamp(28px, 4.8vw, 60px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1a1a1a;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.5s;
+  margin-top: 8px;
+}
+[data-theme="dark"] .center-clock { color: #ffffff; }
+
+/* ── BOTTOM RIGHT — Weather + Location ── */
+.bottom-right {
+  position: absolute;
+  bottom: 0; right: 0;
+  padding: 28px 32px;
+  z-index: 50;
+  text-align: right;
+}
+
+.weather-row-main {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  margin-bottom: 6px;
+}
+
+.w-icon { font-size: 28px; line-height: 1; }
+
+.w-temp {
+  font-size: clamp(32px, 4.5vw, 48px);
+  font-weight: 200;
+  letter-spacing: -0.02em;
+  color: #222;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: color 0.5s;
+}
+[data-theme="dark"] .w-temp { color: #ddd; }
+.w-unit { font-size: 18px; font-weight: 300; color: #888; vertical-align: super; }
+
+.w-desc {
+  font-size: 12px; font-weight: 500; letter-spacing: 0.22em;
+  text-transform: uppercase; color: #888;
+  margin-bottom: 12px;
+}
+
+.w-details {
+  display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+}
+
+.w-detail-row {
+  display: flex; align-items: baseline; gap: 10px; justify-content: flex-end;
+}
+
+.wr-label {
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: #aaa; line-height: 1.4;
+}
+
+.wr-val {
+  font-size: 14px; font-weight: 500; color: #333;
+  transition: color 0.5s;
+}
+[data-theme="dark"] .wr-val { color: #ccc; }
+
+.location-line {
+  margin-top: 10px;
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px;
+  font-size: 13px; font-weight: 300; color: #888; letter-spacing: 0.03em;
+}
+.location-line svg { opacity: 0.4; flex-shrink: 0; }
+
+/* Wake lock toast */
+.wl-toast {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  background: rgba(62,201,123,0.15); border: 1px solid rgba(62,201,123,0.3);
+  border-radius: 999px; padding: 7px 18px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.15em;
+  text-transform: uppercase; color: #3ec97b;
+  opacity: 0; transition: opacity 0.4s;
+  pointer-events: none; white-space: nowrap; z-index: 400;
+}
+.wl-toast.show { opacity: 1; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 200;
+}
+.modal-overlay.active { opacity:1; pointer-events:all; }
+.modal-card {
+  background: #f5f5f3; border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 20px; padding: 48px 54px;
+  text-align: center; max-width: 380px; width: 88%;
+  transform: translateY(10px) scale(0.97);
+  transition: transform 0.3s;
+}
+[data-theme="dark"] .modal-card { background: #000; border-color: rgba(255,255,255,0.10); }
+.modal-overlay.active .modal-card { transform: none; }
+.modal-icon { font-size: 40px; margin-bottom: 18px; }
+.modal-title { font-size: 22px; font-weight: 300; color: #111; margin-bottom: 8px; }
+[data-theme="dark"] .modal-title { color: #eee; }
+.modal-sub { font-size: 13px; color: #777; margin-bottom: 28px; letter-spacing: 0.08em; }
+.modal-btn {
+  display: block; width: 100%; padding: 14px; border-radius: 11px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase;
+  cursor: pointer; border: none; margin-bottom: 10px; transition: opacity 0.2s, transform 0.15s;
+}
+.modal-btn:active { transform: scale(0.97); }
+.modal-btn-primary { background: #222; color: #fff; }
+[data-theme="dark"] .modal-btn-primary { background: #eee; color: #111; }
+.modal-btn-primary:hover { opacity: 0.85; }
+.modal-btn-secondary { background: rgba(0,0,0,0.06); color: #555; border: 1px solid rgba(0,0,0,0.1); }
+[data-theme="dark"] .modal-btn-secondary { background: rgba(255,255,255,0.08); color: #aaa; border-color: rgba(255,255,255,0.12); }
+.modal-btn-secondary:hover { background: rgba(0,0,0,0.12); color: #222; }
+[data-theme="dark"] .modal-btn-secondary:hover { background: rgba(255,255,255,0.14); color: #eee; }
+
+/* Tap to unlock bar */
+.unlock-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 56px;
+  background: transparent;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  cursor: pointer; z-index: 100;
+  transition: background 0.2s;
+}
+[data-theme="dark"] .unlock-bar { border-top-color: rgba(255,255,255,0.07); }
+.unlock-bar:hover { background: rgba(0,0,0,0.04); }
+[data-theme="dark"] .unlock-bar:hover { background: rgba(255,255,255,0.04); }
+.unlock-bar:active { background: rgba(0,0,0,0.08); }
+
+.unlock-text {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.4em;
+  text-transform: uppercase; color: #888;
+  transition: color 0.2s;
+}
+.unlock-bar:hover .unlock-text { color: #333; }
+[data-theme="dark"] .unlock-bar:hover .unlock-text { color: #eee; }
+
+.chev { display:flex; flex-direction:column; gap:3px; opacity:0.35; animation: bup 2s ease-in-out infinite; }
+.chev span { display:block; width:9px; height:1.5px; background:currentColor; border-radius:1px; }
+.chev span:first-child { transform:rotate(-40deg) translateX(2px); }
+.chev span:last-child  { transform:rotate(40deg) translateX(-2px); }
+@keyframes bup { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-3px);} }
+
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+/* ── CAMERA PREVIEW BOX ── */
+.cam-box {
+  position: fixed;
+  top: 18px;
+  right: 90px; /* left of the icon buttons */
+  width: 200px;
+  height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 200;
+  background: #000;
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.cam-box.visible { opacity: 1; }
+.cam-box.hidden  { opacity: 0; }
+
+/* Tesla-style label inside box */
+.cam-box-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 4px 8px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+  font-family: 'Outfit', sans-serif;
+}
+
+.cam-box video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1); /* mirror like a dashcam */
+}
+
+/* Pulse ring when camera activates */
+.cam-ring {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #e82020;
+  box-shadow: 0 0 6px rgba(232,32,32,0.8);
+  animation: rec-blink 1.8s ease-in-out infinite;
+}
+</style>
+</head>
+<body>
+<div class="screen">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="recording-badge">
+      <div class="rec-dot"></div>
+      Recording
+    </div>
+    <div class="topbar-right">
+
+      <button class="icon-btn" id="btn-theme" onclick="toggleTheme()" title="Toggle theme">
+        <svg id="theme-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="theme-sun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-fs" onclick="toggleFullscreen()" title="Fullscreen">
+        <svg id="fs-expand" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        <svg id="fs-compress" viewBox="0 0 24 24" style="display:none"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- CENTER LINE -->
+  <div class="center-line"></div>
+
+  <!-- BIG SENTRY EYE -->
+  <div class="eye-zone">
+    <div class="big-eye-wrap">
+      <canvas class="eye-canvas" id="eyeCanvas"></canvas>
+      <div class="eye-pupil"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM LEFT: Sentry label -->
+  <div class="bottom-left">
+    <div class="sentry-label">Sentry <span>Activated</span></div>
+  </div>
+
+  <!-- CENTER: Parking mode message + clock -->
+  <div class="center-text">
+    <div class="parking-label">Parking Mode</div>
+    <div class="backsoon-label">Will be back soon</div>
+    <div class="center-clock" id="center-clock">--:--</div>
+  </div>
+
+  <!-- BOTTOM RIGHT: Weather -->
+  <div class="bottom-right">
+    <div class="weather-row-main">
+      <div class="w-icon" id="w-icon">⛅</div>
+      <div class="w-temp"><span id="w-temp">--</span><span class="w-unit">°C</span></div>
+    </div>
+    <div class="w-desc" id="w-desc">Loading…</div>
+    <div class="w-details">
+      <div class="w-detail-row"><span class="wr-label">Feels Like</span><span class="wr-val" id="w-feels">--</span></div>
+      <div class="w-detail-row"><span class="wr-label">Humidity</span><span class="wr-val" id="w-humidity">--</span></div>
+      <div class="w-detail-row"><span class="wr-label">Wind</span><span class="wr-val" id="w-wind">--</span></div>
+      <div class="w-detail-row"><span class="wr-label">Interior</span><span class="wr-val" id="w-interior">--</span></div>
+    </div>
+    <div class="location-line">
+      <svg width="11" height="15" viewBox="0 0 12 16" fill="currentColor"><path d="M6 0C2.69 0 0 2.69 0 6c0 4.5 6 10 6 10s6-5.5 6-10c0-3.31-2.69-6-6-6zm0 8.5C4.62 8.5 3.5 7.38 3.5 6S4.62 3.5 6 3.5 8.5 4.62 8.5 6 7.38 8.5 6 8.5z"/></svg>
+      <span id="location-text">Locating…</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- UNLOCK BAR -->
+<div class="unlock-bar" onclick="openModal()">
+  <div class="chev"><span></span><span></span></div>
+  <span class="unlock-text">Tap to Unlock</span>
+  <div class="chev"><span></span><span></span></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-card">
+    <div class="modal-icon">🔓</div>
+    <div class="modal-title">Unlock Vehicle</div>
+    <div class="modal-sub">Authentication required</div>
+    <button class="modal-btn modal-btn-primary" onclick="closeModal()">Confirm Identity</button>
+    <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Dismiss</button>
+  </div>
+</div>
+
+<div class="wl-toast" id="wl-toast">Screen stay-awake active</div>
+
+<script>
+// ── Draw iris on canvas ──
+function drawEye() {
+  const canvas = document.getElementById('eyeCanvas');
+  const size = canvas.offsetWidth;
+  canvas.width = size * devicePixelRatio;
+  canvas.height = size * devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const cx = size/2, cy = size/2, r = size/2;
+
+  // Base iris gradient — warm orange/red like real Tesla sentry
+  const grad = ctx.createRadialGradient(cx, cy, r*0.25, cx, cy, r);
+  grad.addColorStop(0, '#c83000');
+  grad.addColorStop(0.35, '#d84010');
+  grad.addColorStop(0.65, '#e06020');
+  grad.addColorStop(0.82, '#d05010');
+  grad.addColorStop(1, '#7a1800');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Iris texture — fine radial lines (the spiky ring look)
+  const spokes = 72;
+  for(let i=0; i<spokes; i++) {
+    const angle = (i/spokes)*Math.PI*2;
+    const inner = r * 0.30;
+    const outer = r * (0.78 + Math.random()*0.14);
+    const bright = i%3===0;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle)*inner, cy + Math.sin(angle)*inner);
+    ctx.lineTo(cx + Math.cos(angle)*outer, cy + Math.sin(angle)*outer);
+    ctx.strokeStyle = bright
+      ? 'rgba(255,160,60,0.45)'
+      : 'rgba(180,60,10,0.25)';
+    ctx.lineWidth = bright ? 1.2 : 0.6;
+    ctx.stroke();
+  }
+
+  // Outer glow ring
+  const glow = ctx.createRadialGradient(cx,cy,r*0.75, cx,cy,r*1.02);
+  glow.addColorStop(0, 'rgba(220,80,20,0.0)');
+  glow.addColorStop(0.7, 'rgba(220,80,20,0.3)');
+  glow.addColorStop(1, 'rgba(220,80,20,0.0)');
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fillStyle = glow;
+  ctx.fill();
+
+  // Inner dark ring around pupil
+  const innerGrad = ctx.createRadialGradient(cx,cy,r*0.22, cx,cy,r*0.32);
+  innerGrad.addColorStop(0,'rgba(0,0,0,0.9)');
+  innerGrad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.arc(cx,cy,r*0.32,0,Math.PI*2);
+  ctx.fillStyle = innerGrad;
+  ctx.fill();
+}
+
+window.addEventListener('load', drawEye);
+window.addEventListener('resize', drawEye);
+
+// Animate iris — slow rotation on canvas only
+let irisAngle = 0;
+function animateIris() {
+  const canvas = document.getElementById('eyeCanvas');
+  if(canvas) {
+    irisAngle += 0.0015;
+    canvas.style.transform = `rotate(${irisAngle}rad)`;
+  }
+  requestAnimationFrame(animateIris);
+}
+animateIris();
+
+// ── Wake Lock — robust OLED-safe implementation ──
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if(wakeLock) return; // already held
+  try {
+    if('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('[WakeLock] Screen lock acquired');
+      showToast('Screen stay-awake active');
+      wakeLock.addEventListener('release', () => {
+        console.log('[WakeLock] Released — will re-acquire');
+        wakeLock = null;
+        // Re-acquire after brief delay
+        setTimeout(requestWakeLock, 1000);
+      });
+    } else {
+      console.warn('[WakeLock] API not supported');
+      showToast('Wake lock not supported — check browser');
+    }
+  } catch(e) {
+    console.warn('[WakeLock] Failed:', e.message);
+    // Retry in 5s
+    setTimeout(requestWakeLock, 5000);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('wl-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// Re-acquire when tab becomes visible again
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') {
+    console.log('[WakeLock] Tab visible — ensuring lock');
+    requestWakeLock();
+  }
+});
+
+// Interaction heartbeat every 30s as belt-and-braces fallback
+setInterval(() => {
+  // Simulate pointer move to hint activity
+  document.dispatchEvent(new MouseEvent('mousemove', {bubbles: true, clientX: 1, clientY: 1}));
+  // Also dispatch touch
+  try { document.body.dispatchEvent(new TouchEvent('touchstart', {bubbles:true})); } catch(_) {}
+}, 30000);
+
+// Kick it off
+requestWakeLock();
+
+// ── Clock ──
+function tick() {
+  const now=new Date(), h=now.getHours(), m=now.getMinutes();
+  const ampm=h>=12?'PM':'AM', h12=(h%12)||12;
+  const timeStr=`${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+  const cc=document.getElementById('center-clock');
+  if(cc) cc.textContent=timeStr;
+}
+tick(); setInterval(tick,1000);
+
+// ── Theme ──
+let theme = localStorage.getItem('sentry-theme') || 'light';
+function applyTheme(t) {
+  theme=t;
+  if(t==='dark') document.documentElement.setAttribute('data-theme','dark');
+  else document.documentElement.removeAttribute('data-theme');
+  document.getElementById('theme-moon').style.display = t==='dark'?'':'none';
+  document.getElementById('theme-sun').style.display  = t==='light'?'':'none';
+  localStorage.setItem('sentry-theme',t);
+  // Redraw canvas so it stays visible after theme switch
+  setTimeout(drawEye, 50);
+}
+function toggleTheme() { applyTheme(theme==='dark'?'light':'dark'); }
+applyTheme(theme);
+
+// ── Fullscreen ──
+function toggleFullscreen() {
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen().catch(()=>{});
+}
+document.addEventListener('fullscreenchange',()=>{
+  const fs=!!document.fullscreenElement;
+  document.getElementById('fs-expand').style.display   = fs?'none':'';
+  document.getElementById('fs-compress').style.display = fs?'':'none';
+});
+
+// ── Modal ──
+function openModal()  { document.getElementById('modal').classList.add('active'); }
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+document.getElementById('modal').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+
+// ── Weather + Location ──
+async function loadWeather() {
+  let lat=51.5074, lon=-0.1278;
+  if(navigator.geolocation) {
+    await new Promise(r=>navigator.geolocation.getCurrentPosition(
+      p=>{ lat=p.coords.latitude; lon=p.coords.longitude; r(); },
+      ()=>r(), {timeout:6000}
+    ));
+  }
+  // Location name
+  try {
+    const gr=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=12`);
+    const gd=await gr.json(); const a=gd.address;
+    const city=a.city_district||a.suburb||a.city||a.town||a.village||a.county||'';
+    const country=a.country||'';
+    document.getElementById('location-text').textContent=[city,country].filter(Boolean).join(', ');
+  } catch(_) { document.getElementById('location-text').textContent='Location unavailable'; }
+
+  // Weather
+  try {
+    const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code&wind_speed_unit=mph`);
+    const data=await res.json(); const c=data.current;
+    document.getElementById('w-temp').textContent     = Math.round(c.temperature_2m);
+    document.getElementById('w-feels').textContent    = Math.round(c.apparent_temperature)+'°C';
+    document.getElementById('w-humidity').textContent = c.relative_humidity_2m+'%';
+    const dirs=['N','NE','E','SE','S','SW','W','NW'];
+    const dir=dirs[Math.round(c.wind_direction_10m/45)%8];
+    document.getElementById('w-wind').textContent    = Math.round(c.wind_speed_10m)+' mph '+dir;
+    document.getElementById('w-interior').textContent= Math.round(c.temperature_2m+4)+'°C';
+    const wc=c.weather_code;
+    let icon='⛅',desc='Partly Cloudy';
+    if(wc===0){icon='☀️';desc='Clear Sky';}
+    else if(wc<=2){icon='🌤️';desc='Mainly Clear';}
+    else if(wc===3){icon='☁️';desc='Overcast';}
+    else if(wc<=49){icon='🌫️';desc='Foggy';}
+    else if(wc<=59){icon='🌦️';desc='Drizzle';}
+    else if(wc<=69){icon='🌧️';desc='Rain';}
+    else if(wc<=79){icon='❄️';desc='Snow';}
+    else if(wc<=84){icon='🌨️';desc='Snow Showers';}
+    else if(wc<=99){icon='⛈️';desc='Thunderstorm';}
+    document.getElementById('w-icon').textContent=icon;
+    document.getElementById('w-desc').textContent=desc;
+  } catch(e) { document.getElementById('w-desc').textContent='Unavailable'; }
+}
+loadWeather();
+</script>
+
+<!-- CAMERA PREVIEW BOX -->
+<div class="cam-box" id="camBox">
+  <video id="camVideo" autoplay playsinline muted></video>
+  <div class="cam-ring"></div>
+  <div class="cam-box-label">Front Camera</div>
+</div>
+
+
+<script>
+// ── Camera preview: on for 5s, off for 55s, repeat ──
+let camStream = null;
+const camBox   = document.getElementById('camBox');
+const camVideo = document.getElementById('camVideo');
+
+async function startCamera() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 360 } }
+    });
+    camVideo.srcObject = camStream;
+    camBox.classList.add('visible');
+    camBox.classList.remove('hidden');
+  } catch(e) {
+    // Try front camera as fallback
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      camVideo.srcObject = camStream;
+      camBox.classList.add('visible');
+      camBox.classList.remove('hidden');
+    } catch(e2) {
+      console.warn('[Camera] Not available:', e2.message);
+    }
+  }
+}
+
+function stopCamera() {
+  camBox.classList.remove('visible');
+  camBox.classList.add('hidden');
+  setTimeout(() => {
+    if(camStream) {
+      camStream.getTracks().forEach(t => t.stop());
+      camStream = null;
+      camVideo.srcObject = null;
+    }
+  }, 400); // wait for fade out before killing stream
+}
+
+function cameraCycle() {
+  startCamera();
+  setTimeout(() => {
+    stopCamera();
+    // next cycle in 55s (total 60s per cycle)
+    setTimeout(cameraCycle, 55000);
+  }, 5000);
+}
+
+// Start first cycle after 2s (let page settle)
+setTimeout(cameraCycle, 2000);
+</script>
+
+</body>
+</html>
